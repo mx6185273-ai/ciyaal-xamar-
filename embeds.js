@@ -1,0 +1,425 @@
+// embeds.js — Discord embed and button builders
+// Ciyaal Xamar · Discord Mafia Bot
+
+import {
+  EmbedBuilder,
+  ActionRowBuilder,
+  ButtonBuilder,
+  ButtonStyle,
+} from "discord.js";
+import { getAlivePlayers, getDilaayePlayers, getRoleCounts } from "./game.js";
+
+const IMAGES = {
+  lobby:      "https://cdn.noctaly.com/servers/859126603619631115/vd3W6aSho7.jpg",
+  shacab:     "https://cdn.noctaly.com/servers/859126603619631115/tJGyElBTEm.jpg",
+  dhakhtar:   "https://cdn.noctaly.com/servers/859126603619631115/Wb6yHb4_M6.jpg",
+  danbibaare: "https://cdn.noctaly.com/servers/859126603619631115/HogxQZ3daP.jpg",
+  dilaaye:    "https://cdn.noctaly.com/servers/859126603619631115/1TZ1--f_dY.jpg",
+};
+
+// Gold/amber timer bar for day phase
+function makeDayTimerBar(timeLeft) {
+  const total = 60;
+  const blocks = 12;
+  const filled = Math.round((timeLeft / total) * blocks);
+  const pct = Math.round((timeLeft / total) * 100);
+  const bar = "🟨".repeat(filled) + "⬛".repeat(blocks - filled);
+  return `${bar}\n**${timeLeft}s** hadhay  ·  ${pct}%`;
+}
+
+// Dark purple timer bar for night phase
+function makeNightTimerBar(timeLeft) {
+  const total = 30;
+  const blocks = 10;
+  const filled = Math.round((timeLeft / total) * blocks);
+  const pct = Math.round((timeLeft / total) * 100);
+  const bar = "🟣".repeat(filled) + "⬛".repeat(blocks - filled);
+  return `${bar}\n**${timeLeft}s** hadhay  ·  ${pct}%`;
+}
+
+// Medal labels for vote ranking
+const MEDALS = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"];
+
+export function buildLobbyEmbed(game, guild) {
+  const players = Array.from(game.players.values());
+  const count = players.length;
+  const { dilaaye, dhakhtar, danbibaare } = count >= 5
+    ? getRoleCounts(count)
+    : { dilaaye: 1, dhakhtar: 1, danbibaare: 1 };
+
+  const statusLine = count < 5
+    ? `⚠️ Ugu yaraan 5 ciyaaryahan ayaa loo baahan yahay. (${count}/5)`
+    : `✅ Diyaar — Host wuxuu bilaabi karaa.`;
+
+  return new EmbedBuilder()
+    .setTitle("🔪 CIYAAL XAMAR — MAFIA")
+    .setDescription(
+      "Ku soo biir ciyaarta! Dilaayayaasha, Dhakhtarka, iyo Shacabka ayaa iska horimanaya.\n" +
+      "Host-ku wuxuu bilaabi karaa marka dhammaantood diyaar yihiin."
+    )
+    .setColor(0x1a1a2e)
+    .setImage(IMAGES.lobby)
+    .addFields(
+      { name: "👥 Ciyaartoyda", value: `**${count}** / 20`, inline: true },
+      {
+        name: "🎭 Doorarka",
+        value: [
+          `🔪 ×${dilaaye} Dilaaye`,
+          `🩺 ×${dhakhtar} Dhakhtar`,
+          `🕵️ ×${danbibaare} Danbi-baare`,
+          `🏠 Shacabka kale`,
+        ].join("\n"),
+        inline: true,
+      },
+      {
+        name: "📋 Liiska Ciyaartoyda",
+        value: count === 0
+          ? "_Wali ciyaartoy ma jiraan_"
+          : players.map((p, i) => `\`${i + 1}.\` ${p.displayName}`).join("\n"),
+      },
+      { name: "ℹ️ Xaalad", value: statusLine }
+    )
+    .setFooter({ text: `${guild.name} · Ciyaartoyda: ${count}/20` });
+}
+
+export function buildLobbyButtons(game) {
+  const playerCount = game.players.size;
+  return new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId("lobby_join")
+      .setLabel("KU BIIR")
+      .setStyle(ButtonStyle.Success)
+      .setDisabled(playerCount >= 20),
+    new ButtonBuilder()
+      .setCustomId("lobby_start")
+      .setLabel("BILAAB HADDA")
+      .setStyle(ButtonStyle.Primary)
+      .setDisabled(playerCount < 5),
+    new ButtonBuilder()
+      .setCustomId("lobby_leave")
+      .setLabel("KA BAX")
+      .setStyle(ButtonStyle.Danger)
+      .setDisabled(false),
+    new ButtonBuilder()
+      .setCustomId("lobby_stop")
+      .setLabel("KA BIXI")
+      .setStyle(ButtonStyle.Danger)
+      .setDisabled(false)
+  );
+}
+
+export function buildRoleDmEmbed(player, game) {
+  const alive = getAlivePlayers(game);
+  const allPlayersList = alive
+    .map((p, i) => `\`${i + 1}.\` ${p.displayName}`)
+    .join("\n");
+
+  if (player.role === "dilaaye") {
+    const teammates = getDilaayePlayers(game)
+      .filter(p => p.id !== player.id)
+      .map(p => `🔪 **${p.displayName}**`)
+      .join("\n") || "_Adiga oo kali ah_";
+
+    return new EmbedBuilder()
+      .setTitle("🔪 DILAAYE")
+      .setDescription(
+        "**Adiga waxaad tahay Dilaaye!**\n" +
+        "Habeenta waxaad dilaysaa shacabka. Maalintana qarso doorkaaga si aanad loo garanin!"
+      )
+      .setColor(0xdc143c)
+      .setImage(IMAGES.dilaaye)
+      .addFields(
+        { name: "🤝 Dilaayeyaasha Kale", value: teammates },
+        {
+          name: "📌 Tilmaamaha",
+          value: [
+            "🔪 **Habeenta** — DM kaa imaanaysaa, xulo qofka aad dili rabto",
+            "🎭 **Maalinta** — Isku day inaadan lagu garanin, cod si xirfad leh",
+            "🏆 **Guusha** — Tirada Dilaayeyaasha ay la siman tahay ama ka badan Shacabka",
+          ].join("\n"),
+        },
+        { name: `👥 Dhammaan Ciyaartoyda (${alive.length})`, value: allPlayersList }
+      )
+      .setFooter({ text: "🤫 Dilaaye · Xirso sirta!" });
+  }
+
+  if (player.role === "dhakhtar") {
+    return new EmbedBuilder()
+      .setTitle("🩺 DHAKHTAR")
+      .setDescription(
+        "**Adiga waxaad tahay Dhakhtar!**\n" +
+        "Gacantaadu waxay badbaadin kartaa naf habeenta kasta. Xil weyn ayaa ku saaran!"
+      )
+      .setColor(0x00bfff)
+      .setImage(IMAGES.dhakhtar)
+      .addFields(
+        {
+          name: "📌 Tilmaamaha",
+          value: [
+            "🛡️ **Habeenta** — DM kaa imaanaysaa, xulo qofka aad badbaadinayso",
+            "💡 **Xasuus** — Naftaada ayaad badbaadin kartaa, laakiin mar kaliya",
+            "🏆 **Guusha** — Dhammaan Dilaayeyaasha in la saaro",
+          ].join("\n"),
+        },
+        { name: `👥 Dhammaan Ciyaartoyda (${alive.length})`, value: allPlayersList }
+      )
+      .setFooter({ text: "🩺 Dhakhtar · Naf badbaadi!" });
+  }
+
+  if (player.role === "danbi-baare") {
+    return new EmbedBuilder()
+      .setTitle("🕵️ DANBI-BAARE")
+      .setDescription(
+        "**Adiga waxaad tahay Danbi-baare!**\n" +
+        "Habeenta hal qof ayaad baari kartaa — Dilaaye buu yahay mise maya?"
+      )
+      .setColor(0xffd700)
+      .setImage(IMAGES.danbibaare)
+      .addFields(
+        {
+          name: "📌 Tilmaamaha",
+          value: [
+            "🔍 **Habeenta** — DM kaa imaanaysaa, xulo qofka aad baari rabto",
+            "🤖 **Natiijada** — Bot-ku kuu sheegaa: ✅ Dilaaye · ❌ Ma aha",
+            "⚠️ **Xuduud** — Hal baaritaan oo kaliya habeen kasta",
+            "🏆 **Guusha** — Dhammaan Dilaayeyaasha in la saaro",
+          ].join("\n"),
+        },
+        { name: `👥 Dhammaan Ciyaartoyda (${alive.length})`, value: allPlayersList }
+      )
+      .setFooter({ text: "🕵️ Danbi-baare · Aqoontaada waa xoogaaga!" });
+  }
+
+  // Shacab
+  return new EmbedBuilder()
+    .setTitle("🏠 SHACAB")
+    .setDescription(
+      "**Adiga waxaad ka mid tahay Shacabka!**\n" +
+      "Raadi Dilaayeyaasha — maalintana codbixinta ku saaro cidda ugu khatar badan!"
+    )
+    .setColor(0x2ecc71)
+    .setImage(IMAGES.shacab)
+    .addFields(
+      {
+        name: "📌 Tilmaamaha",
+        value: [
+          "☀️ **Maalintii** — Cod bixin: shaki qofka u muuqda Dilaaye",
+          "👁️ **Caawiye** — Dhakhtar iyo Danbi-baare waxay kaa caawiyaan",
+          "🏆 **Guusha** — Dhammaan Dilaayeyaasha in la saaro",
+        ].join("\n"),
+      },
+      { name: `👥 Dhammaan Ciyaartoyda (${alive.length})`, value: allPlayersList }
+    )
+    .setFooter({ text: "🏠 Shacab · Raadi runta!" });
+}
+
+export function buildNightEmbed(round, timeLeft) {
+  return new EmbedBuilder()
+    .setTitle(`🌙 HABEENKA · Wareeg ${round}`)
+    .setDescription(
+      "**Tuuladu way seexatay... laakiin dilaayeyaashu way toosanyihiin.**\n\n" +
+      "🔪 Dilaayeyaashu waxay dooranayaan cidda la dilo\n" +
+      "🩺 Dhakhtarku wuxuu dooranayaa cidda la badbaadinayo\n" +
+      "🕵️ Danbi-baarahu wuxuu baaraa hal ciyaaryahan"
+    )
+    .setColor(0x0d0d2b)
+    .addFields(
+      { name: "⏳ Waqtiga la haray", value: makeNightTimerBar(timeLeft) },
+      { name: "🌑 Xaaladda", value: "Habeenka waa socda — degdeg!" }
+    )
+    .setFooter({ text: "📨 DM-kaaga fur si aad ficil u qaadato!" });
+}
+
+export function buildDayEmbed(round, alivePlayers, timeLeft) {
+  return new EmbedBuilder()
+    .setTitle(`☀️ MAALINTA · Wareeg ${round}`)
+    .setDescription(
+      "**Subaxdii ayaa beesha kici — go'aanka maanta waa muhiim!**\n\n" +
+      "Ku saaro cidda aad u malaynayso inay Dilaaye tahay. Dhammaan ciyaartoyda nool ayaa codeynaya!"
+    )
+    .setColor(0xf59e0b)
+    .addFields(
+      { name: "⏱️ Waqtiga la haray", value: makeDayTimerBar(timeLeft) },
+      { name: "🗳️ Codad la bixiyay", value: "0", inline: true },
+      { name: "👥 Ciyaartoyda Nool", value: `${alivePlayers.length}`, inline: true }
+    )
+    .setFooter({ text: "💡 Hoos riix si aad u codeysato · Codkaaga badali kartaa!" });
+}
+
+// Vote buttons use ButtonStyle.Primary for gold/prominent feel.
+export function buildVoteButtons(alivePlayers) {
+  const rows = [];
+  const chunks = [];
+  for (let i = 0; i < alivePlayers.length; i += 5) {
+    chunks.push(alivePlayers.slice(i, i + 5));
+  }
+  const maxRows = Math.min(chunks.length, 4);
+  for (let i = 0; i < maxRows; i++) {
+    const row = new ActionRowBuilder();
+    chunks[i].forEach(player => {
+      row.addComponents(
+        new ButtonBuilder()
+          .setCustomId(`vote_${player.id}`)
+          .setLabel(player.displayName.slice(0, 25))
+          .setStyle(ButtonStyle.Primary)
+      );
+    });
+    rows.push(row);
+  }
+  const skipRow = new ActionRowBuilder().addComponents(
+    new ButtonBuilder()
+      .setCustomId("vote_skip")
+      .setLabel("⏭️ SKIP — Cod la'aan")
+      .setStyle(ButtonStyle.Secondary)
+  );
+  rows.push(skipRow);
+  return rows;
+}
+
+// Night action customId format: night_kill_{gameChannelId}_{targetId}
+export function buildNightKillButtons(alivePlayers, gameChannelId) {
+  const rows = [];
+  const targets = alivePlayers.filter(p => p.role !== "dilaaye");
+  const chunks = [];
+  for (let i = 0; i < targets.length; i += 5) chunks.push(targets.slice(i, i + 5));
+  const maxRows = Math.min(chunks.length, 4);
+  for (let i = 0; i < maxRows; i++) {
+    const row = new ActionRowBuilder();
+    chunks[i].forEach(player => {
+      row.addComponents(
+        new ButtonBuilder()
+          .setCustomId(`night_kill_${gameChannelId}_${player.id}`)
+          .setLabel(player.displayName.slice(0, 25))
+          .setStyle(ButtonStyle.Danger)
+      );
+    });
+    rows.push(row);
+  }
+  return rows;
+}
+
+export function buildNightSaveButtons(alivePlayers, gameChannelId) {
+  const rows = [];
+  const chunks = [];
+  for (let i = 0; i < alivePlayers.length; i += 5) chunks.push(alivePlayers.slice(i, i + 5));
+  const maxRows = Math.min(chunks.length, 4);
+  for (let i = 0; i < maxRows; i++) {
+    const row = new ActionRowBuilder();
+    chunks[i].forEach(player => {
+      row.addComponents(
+        new ButtonBuilder()
+          .setCustomId(`night_save_${gameChannelId}_${player.id}`)
+          .setLabel(player.displayName.slice(0, 25))
+          .setStyle(ButtonStyle.Success)
+      );
+    });
+    rows.push(row);
+  }
+  return rows;
+}
+
+export function buildNightInvestigateButtons(alivePlayers, gameChannelId) {
+  const rows = [];
+  const chunks = [];
+  for (let i = 0; i < alivePlayers.length; i += 5) chunks.push(alivePlayers.slice(i, i + 5));
+  const maxRows = Math.min(chunks.length, 4);
+  for (let i = 0; i < maxRows; i++) {
+    const row = new ActionRowBuilder();
+    chunks[i].forEach(player => {
+      row.addComponents(
+        new ButtonBuilder()
+          .setCustomId(`night_investigate_${gameChannelId}_${player.id}`)
+          .setLabel(player.displayName.slice(0, 25))
+          .setStyle(ButtonStyle.Primary)
+      );
+    });
+    rows.push(row);
+  }
+  return rows;
+}
+
+export function buildVoteResultEmbed(eliminated, voteMap, players) {
+  const sortedVotes = Array.from(voteMap.entries()).sort(([, a], [, b]) => b - a);
+  const rankLines = sortedVotes.length > 0
+    ? sortedVotes.map(([id, count], idx) => {
+        const p = players.get(id);
+        const medal = MEDALS[idx] ?? "🔸";
+        const dots = "·".repeat(Math.max(1, count));
+        return `${medal} **${p?.displayName ?? id}** ${dots} — **${count}** codad`;
+      }).join("\n")
+    : "_Codad la'aan — qof cod kuma bixin_";
+
+  const accentColor = eliminated ? 0xf59e0b : 0x22c55e;
+  const embed = new EmbedBuilder()
+    .setTitle("📋 Natiijada Codeynta")
+    .setColor(accentColor)
+    .addFields({ name: "🗳️ Natiijada", value: rankLines });
+
+  if (eliminated) {
+    const isDhakhtar = eliminated.role === "dhakhtar";
+    embed.addFields({
+      name: isDhakhtar ? "💔 DHAKHTAR AYAA LA SAARTAY!" : "💀 La Saaray",
+      value: isDhakhtar
+        ? `**${eliminated.displayName}** ayaa laga saaray ciyaarta.\n` +
+          `😱 Ninka/Naagta badbaadinaysay oo naftiisu baxday!\n` +
+          `🎭 Doorarkiisu wuxuu ahaa: **${getRoleLabel(eliminated.role)}**`
+        : `**${eliminated.displayName}** ayaa laga saaray ciyaarta.\n` +
+          `🎭 Doorarkiisu wuxuu ahaa: **${getRoleLabel(eliminated.role)}**`,
+    });
+  } else {
+    embed.addFields({
+      name: "⚖️ Natiijada",
+      value: "Cod is qabsig ah ayaa dhacay — qof lagama saarin wareeggan.",
+    });
+  }
+  return embed;
+}
+
+export function buildWinEmbed(winner, players) {
+  const isDilaaye = winner === "dilaaye";
+  const roleLines = players
+    .map(p => `${p.alive ? "✅" : "💀"} **${p.displayName}** — ${getRoleLabel(p.role)}`)
+    .join("\n");
+
+  return new EmbedBuilder()
+    .setTitle(isDilaaye ? "🔪 DILAAYEYAASHU GUULEYSTEEN!" : "🏆 SHACABKU GUULEYSTAY!")
+    .setDescription(
+      isDilaaye
+        ? "☠️ Dilaayeyaashu waxay la simeen shacabka.\n**Tuuladu waxay hoos u dhacday — ciyaarta dhammaatay!**"
+        : "🎉 Dhammaan Dilaayeyaasha waa laga saaray.\n**Shacabku wuu badbaadey — nabadda ayaa soo noqotay!**"
+    )
+    .setColor(isDilaaye ? 0xdc143c : 0x22c55e)
+    .addFields({ name: "🎭 Doorarka Dhammaan Ciyaartoyda", value: roleLines || "N/A" })
+    .setFooter({ text: "Ciyaal Xamar · Mafia Game" });
+}
+
+export function buildKickButtons(game, hostId) {
+  const players = Array.from(game.players.values()).filter(p => p.id !== hostId);
+  const rows = [];
+  const chunks = [];
+  for (let i = 0; i < players.length; i += 5) chunks.push(players.slice(i, i + 5));
+  const maxRows = Math.min(chunks.length, 4);
+  for (let i = 0; i < maxRows; i++) {
+    const row = new ActionRowBuilder();
+    chunks[i].forEach(player => {
+      row.addComponents(
+        new ButtonBuilder()
+          .setCustomId(`kick_${player.id}`)
+          .setLabel(player.displayName.slice(0, 25))
+          .setStyle(ButtonStyle.Danger)
+      );
+    });
+    rows.push(row);
+  }
+  return rows;
+}
+
+function getRoleLabel(role) {
+  const labels = {
+    dilaaye:       "🔪 Dilaaye",
+    dhakhtar:      "🩺 Dhakhtar",
+    "danbi-baare": "🕵️ Danbi-baare",
+    shacab:        "🏠 Shacab",
+  };
+  return labels[role] ?? role;
+}
