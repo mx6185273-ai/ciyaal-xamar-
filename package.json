@@ -1,7 +1,7 @@
 {
   "name": "ciyaal-xamar-bot",
-  "version": "1.0.0",
-  "description": "Ciyaal Xamar — Discord Mafia Bot (Somali community)",
+  "version": "1.1.0",
+  "description": "Ciyaal Xamar — Discord Mafia + 24/7 VC Bot (Somali community)",
   "type": "module",
   "main": "index.js",
   "scripts": {
@@ -13,9 +13,11 @@
   },
   "dependencies": {
     "discord.js": "^14.16.3",
-    "dotenv": "^16.4.5"
+    "dotenv": "^16.4.5",
+    "@discordjs/voice": "^0.17.0",
+    "libsodium-wrappers": "^0.7.15"
   },
-  "keywords": ["discord", "bot", "mafia", "somali", "game"],
+  "keywords": ["discord", "bot", "mafia", "somali", "game", "voice"],
   "author": "Ciyaal Xamar",
   "license": "MIT"
 }
