@@ -9,6 +9,7 @@ import { games, createGame, assignRoles, getAlivePlayers, getGuildGames, addLog 
 import { buildLobbyEmbed, buildLobbyButtons, buildRoleDmEmbed, buildKickButtons } from "./embeds.js";
 import { startNightPhase } from "./phases.js";
 import { handlePirateMessage, handlePirateInteraction } from "./pirate-handler.js";
+import { startAdminReporter, trackCommand } from "./admin-reporter.js";
 
 const MAX_GAMES_PER_GUILD = 5;
 const OWNER_ID = "725076744251637760";
@@ -35,6 +36,7 @@ const client = new Client({
 
 client.once(Events.ClientReady, (c) => {
   console.log(`✅ Bot diyaar: ${c.user.tag} | ${c.guilds.cache.size} server`);
+  startAdminReporter(c);
 });
 client.on(Events.MessageCreate, (msg) => handleMessage(msg));
 client.on(Events.InteractionCreate, (interaction) => handleInteraction(interaction));
