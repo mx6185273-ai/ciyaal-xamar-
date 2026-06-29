@@ -88,6 +88,30 @@ async function handleMessage(msg) {
           value: ["🔪 **Dilaaye** — Habeenta ciyaaryahan dila (waa sir)", "🩺 **Dhakhtar** — Habeenta hal qof badbaadi", "🕵️ **Danbi-baare** — Habeenta hal qof baari (Dilaaye mise maya)", "🏠 **Shacab** — Maalinta codbixinta ku saaro Dilaayaha"].join("\n"),
         },
         { name: "⚙️ Tirada Doorarka", value: ["`5–9`   ciyaaryahan → 1 Dilaaye · 1 Dhakhtar · 1 Danbi-baare", "`10–14` ciyaaryahan → 2 Dilaaye · 1 Dhakhtar · 1 Danbi-baare", "`15–20` ciyaaryahan → 3 Dilaaye · 1 Dhakhtar · 2 Danbi-baare"].join("\n") }
+
+        {
+          name: "🏴‍☠️ Pirate Treasure Hunt — Ciyaarta Cusub",
+          value: [
+            "`!pirate` — Lobby cusub bilow (2–20 ciyaaryahan, elimination mode)",
+            "`!shop` — Alaabta lagu iibsan karo arag (Shield, Lucky Compass, Treasure Map)",
+            "`!buy shield` — 🛡️ 1,000 Gold · Deadly Trap kaa badbaadiya (2 mar)",
+            "`!buy compass` — 🧭 2,000 Gold · Treasure fursad kordhiya",
+            "`!buy map` — 🗺️ 10 Gems · Jasiirad ammaan ah tilmaamiya",
+            "`!inventory` — 🎒 Items, Gold iyo Gems-kaaga arag",
+            "`!daily` — 🎁 500 Gold + 1 Gem qaado (24 saac kasta)",
+            "`!leaderboard` — 🏆 Top 10 Pirates ee ugu badnaa Gold",
+          ].join("\n"),
+        },
+        {
+          name: "⚓ Sida Pirate Ciyaaruhu u Shaqeyso",
+          value: [
+            "🏝️ Kasta round jasiirad dooro (A–E) — 30 ilbiriqsi",
+            "💰 Treasure Found +200–500 Gold · 💎 Rare Treasure +1–2 Gems",
+            "📦 Item Found: Shield ama Lucky Compass",
+            "☠️ Trap: Gold luminta · 💥 Deadly Trap: Ciyaarta waad ka baxaysaa",
+            "👑 Hal burcad-badeed oo keliya ayaa guuleysta!",
+          ].join("\n"),
+        }
       )
       .setFooter({ text: "Ciyaal Xamar Bot · !icaawi haddaad caawimaad u baahantahay" });
     await msg.reply({ embeds: [embed] });
