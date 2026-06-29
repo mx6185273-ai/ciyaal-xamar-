@@ -8,6 +8,7 @@ import { joinVoiceChannel, VoiceConnectionStatus, entersState } from "@discordjs
 import { games, createGame, assignRoles, getAlivePlayers, getGuildGames, addLog } from "./game.js";
 import { buildLobbyEmbed, buildLobbyButtons, buildRoleDmEmbed, buildKickButtons } from "./embeds.js";
 import { startNightPhase } from "./phases.js";
+import { handlePirateMessage, handlePirateInteraction } from "./pirate-handler.js";
 
 const MAX_GAMES_PER_GUILD = 5;
 const OWNER_ID = "725076744251637760";
@@ -64,6 +65,7 @@ function joinVC(guildId, channelId, adapterCreator) {
 // ─── Message Handler ──────────────────────────────────────────────────────────
 async function handleMessage(msg) {
   if (msg.author.bot || !msg.guild) return;
+  if (await handlePirateMessage(client, msg)) return;
   const content  = msg.content.trim().toLowerCase();
   const raw      = msg.content.trim();
   const channelId = msg.channel.id;
@@ -263,6 +265,7 @@ function parseNightCustomId(customId, prefix) {
 // ─── Interaction Handler ──────────────────────────────────────────────────────
 async function handleInteraction(interaction) {
   if (!interaction.isButton()) return;
+  if (await handlePirateInteraction(client, interaction)) return;
   const userId   = interaction.user.id;
   const customId = interaction.customId;
 
