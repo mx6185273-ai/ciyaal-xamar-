@@ -89,7 +89,7 @@ async function handleMessage(msg) {
           name: "📌 Mafia Doorarka",
           value: ["🔪 **Dilaaye** — Habeenta ciyaaryahan dila (waa sir)", "🩺 **Dhakhtar** — Habeenta hal qof badbaadi", "🕵️ **Danbi-baare** — Habeenta hal qof baari (Dilaaye mise maya)", "🏠 **Shacab** — Maalinta codbixinta ku saaro Dilaayaha"].join("\n"),
         },
-        { name: "⚙️ Tirada Doorarka", value: ["`5–9`   ciyaaryahan → 1 Dilaaye · 1 Dhakhtar · 1 Danbi-baare", "`10–14` ciyaaryahan → 2 Dilaaye · 1 Dhakhtar · 1 Danbi-baare", "`15–20` ciyaaryahan → 3 Dilaaye · 1 Dhakhtar · 2 Danbi-baare"].join("\n") }
+        { name: "⚙️ Tirada Doorarka", value: ["`5–9`   ciyaaryahan → 1 Dilaaye · 1 Dhakhtar · 1 Danbi-baare", "`10–14` ciyaaryahan → 2 Dilaaye · 1 Dhakhtar · 1 Danbi-baare", "`15–20` ciyaaryahan → 3 Dilaaye · 1 Dhakhtar · 2 Danbi-baare"].join("\n") },
 
         {
           name: "🏴‍☠️ Pirate Treasure Hunt — Ciyaarta Cusub",
