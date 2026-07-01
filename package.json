@@ -1,23 +1,16 @@
 {
-  "name": "ciyaal-xamar-bot",
-  "version": "1.1.0",
-  "description": "Ciyaal Xamar — Discord Mafia + 24/7 VC Bot (Somali community)",
-  "type": "module",
-  "main": "index.js",
+  "name": "workspace",
+  "version": "0.0.0",
+  "license": "MIT",
   "scripts": {
-    "start": "node index.js",
-    "dev": "node --watch index.js"
+    "preinstall": "sh -c 'rm -f package-lock.json yarn.lock; case \"$npm_config_user_agent\" in pnpm/*) ;; *) echo \"Use pnpm instead\" >&2; exit 1 ;; esac'",
+    "build": "pnpm run typecheck && pnpm -r --if-present run build",
+    "typecheck:libs": "tsc --build",
+    "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck"
   },
-  "engines": {
-    "node": ">=18.0.0"
-  },
-  "dependencies": {
-    "discord.js": "^14.16.3",
-    "dotenv": "^16.4.5",
-    "@discordjs/voice": "^0.17.0",
-    "libsodium-wrappers": "^0.7.15"
-  },
-  "keywords": ["discord", "bot", "mafia", "somali", "game", "voice"],
-  "author": "Ciyaal Xamar",
-  "license": "MIT"
+  "private": true,
+  "devDependencies": {
+    "prettier": "^3.8.4",
+    "typescript": "~5.9.3"
+  }
 }
