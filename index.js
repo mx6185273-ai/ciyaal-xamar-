@@ -1,5 +1,5 @@
 // index.js — Ciyaal Xamar Discord Bot
-// Commands: !dilaay !kasaar !join !leave !help !icaawi !dm !news
+// Commands: !dilaay !kasaar !join !leave !help !icaawi !dm !news !qarsoon
 import 'dotenv/config';
 import {
   Client, GatewayIntentBits, Partials, Events, EmbedBuilder,
@@ -9,6 +9,7 @@ import { games, createGame, assignRoles, getAlivePlayers, getGuildGames, addLog 
 import { buildLobbyEmbed, buildLobbyButtons, buildRoleDmEmbed, buildKickButtons } from "./embeds.js";
 import { startNightPhase } from "./phases.js";
 import { handlePirateMessage, handlePirateInteraction } from "./pirate-handler.js";
+import { handleSecretAgentMessage, handleSecretAgentInteraction } from "./secret-agent-handler.js";
 import { startAdminReporter, trackCommand } from "./admin-reporter.js";
 
 const MAX_GAMES_PER_GUILD = 5;
@@ -68,6 +69,7 @@ function joinVC(guildId, channelId, adapterCreator) {
 async function handleMessage(msg) {
   if (msg.author.bot || !msg.guild) return;
   if (await handlePirateMessage(client, msg)) return;
+  if (await handleSecretAgentMessage(client, msg)) return;
   const content  = msg.content.trim().toLowerCase();
   const raw      = msg.content.trim();
   const channelId = msg.channel.id;
@@ -292,6 +294,7 @@ function parseNightCustomId(customId, prefix) {
 async function handleInteraction(interaction) {
   if (!interaction.isButton()) return;
   if (await handlePirateInteraction(client, interaction)) return;
+  if (await handleSecretAgentInteraction(client, interaction)) return;
   const userId   = interaction.user.id;
   const customId = interaction.customId;
 
