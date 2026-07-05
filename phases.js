@@ -6,7 +6,8 @@ import {
 } from "./game.js";
 import {
   buildNightEmbed, buildDayEmbed, buildVoteButtons, buildVoteResultEmbed,
-  buildWinEmbed, buildNightKillButtons, buildNightSaveButtons, buildNightInvestigateButtons,
+  buildWinEmbed, buildNightKillButtons, buildNightSaveButtons, buildNightSheriffButtons,
+  buildSheriffTurnEmbed,
 } from "./embeds.js";
 
 const NIGHT_DURATION = 30000;
@@ -18,7 +19,7 @@ export async function startNightPhase(client, game) {
   game.votes = [];
   game.nightKillTarget = null;
   game.nightSaveTarget = null;
-  game.nightInvestigations = new Map();
+  game.nightSheriffUsed = new Set();
 
   const channel = await client.channels.fetch(game.channelId).catch(() => null);
   if (!channel) return;
@@ -45,10 +46,10 @@ export async function startNightPhase(client, game) {
       const saveButtons = buildNightSaveButtons(alive, game.channelId);
       if (saveButtons.length > 0)
         await user.send({ content: `🌙 **HABEENKA — Wareegga ${game.round}**\n🛡️ Xulo cidda aad badbaadin rabto:`, components: saveButtons }).catch(() => null);
-    } else if (player.role === "danbi-baare") {
-      const investigateButtons = buildNightInvestigateButtons(alive.filter(p => p.id !== player.id), game.channelId);
-      if (investigateButtons.length > 0)
-        await user.send({ content: `🌙 **HABEENKA — Wareegga ${game.round}**\n🔍 Xulo cidda aad baari rabto:`, components: investigateButtons }).catch(() => null);
+    } else if (player.role === "sheriff") {
+      const sheriffButtons = buildNightSheriffButtons(alive.filter(p => p.id !== player.id), game.channelId);
+      if (sheriffButtons.length > 0)
+        await user.send({ embeds: [buildSheriffTurnEmbed(game.round)], components: sheriffButtons }).catch(() => null);
     }
   }
 
