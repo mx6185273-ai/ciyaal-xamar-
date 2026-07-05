@@ -3,6 +3,8 @@
 import 'dotenv/config';
 import {
   Client, GatewayIntentBits, Partials, Events, EmbedBuilder,
+  ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder,
+  ButtonBuilder, ButtonStyle, PermissionFlagsBits,
 } from "discord.js";
 import { joinVoiceChannel, VoiceConnectionStatus, entersState } from "@discordjs/voice";
 import { games, createGame, assignRoles, getAlivePlayers, getGuildGames, addLog, checkWinCondition } from "./game.js";
@@ -99,6 +101,7 @@ async function handleMessage(msg) {
         { name: "🎧 Voice Channel — 24/7", value: ["`!join` — Bot-ka VC-ga ku soo gal (24/7 joogayaa)", "`!leave` — Bot-ka VC-ka ka saar"].join("\n") },
         { name: "🆘 Caawimo & Xiriir", value: ["`!icaawi [farriin]` — Cilad ama su'aal owner-ka u dir", "  _Tusaale: `!icaawi Bot-ka lobby kuma furin`_"].join("\n") },
         { name: "🔐 Owner-ka Kaliya", value: ["`!dm [farriin]` — Shacabka ciyaarta ku jira DM u dir", "`!news [farriin]` — Server walba dhammaan dadka DM u dir"].join("\n") },
+        { name: "📝 Admin — Say Command", value: ["`!say` — Foom modal ah furo si bot-ku fariin idinku dhaha (Admin/Manage Messages)"].join("\n") },
         {
           name: "📌 Mafia Doorarka",
           value: ["🔪 **Dilaaye** — Habeenta ciyaaryahan dila (waa sir)", "🩺 **Dhakhtar** — Habeenta hal qof badbaadi", "⭐ **Sheriff** — Habeenta hal qof toog (haddii Dilaaye yahay wuu dhintaa, haddii kale waxba ma dhacaan)", "🏠 **Shacab** — Maalinta codbixinta ku saaro Dilaayaha"].join("\n"),
@@ -292,6 +295,18 @@ async function handleMessage(msg) {
     await msg.reply({ content: "🚪 Xulo ciyaaryahanka aad saari rabto:", components: kickButtons });
     return;
   }
+
+  // ── !say — Admin/Manage Messages kaliya: modal fur si loo diro fariin ─────
+  if (content === "!say") {
+    const hasPerm = msg.member?.permissions?.has(PermissionFlagsBits.Administrator)
+      || msg.member?.permissions?.has(PermissionFlagsBits.ManageMessages);
+    if (!hasPerm) { await msg.reply("🔐 Amarka `!say` waxaa isticmaali kara oo keliya **Administrator** ama qof leh **Manage Messages** permission."); return; }
+    const row = new ActionRowBuilder().addComponents(
+      new ButtonBuilder().setCustomId(`open_say_${msg.channel.id}`).setLabel("📝 Buuxi Foomka").setStyle(ButtonStyle.Primary)
+    );
+    await msg.reply({ content: "Riix batoonka hoose si aad u buuxiso foomka fariinta:", components: [row] });
+    return;
+  }
 }
 
 // ─── Night CustomId Parser ────────────────────────────────────────────────────
@@ -302,9 +317,60 @@ function parseNightCustomId(customId, prefix) {
   return { gameChannelId: rest.slice(0, idx), targetId: rest.slice(idx + 1) };
 }
 
+// ─── !say — Modal Submit Handler ──────────────────────────────────────────────
+async function handleSayModalSubmit(interaction) {
+  const channelId = interaction.customId.slice("say_modal_".length);
+  const content   = interaction.fields.getTextInputValue("say_content");
+  const attachmentUrl = interaction.fields.getTextInputValue("say_attachment_url")?.trim();
+
+  const channel = await client.channels.fetch(channelId).catch(() => null);
+  if (!channel) { await interaction.reply({ content: "⚠️ Channel-ka lama helin.", ephemeral: true }); return; }
+
+  const payload = { content: attachmentUrl ? `${content}\n${attachmentUrl}` : content };
+  const sent = await channel.send(payload).catch(() => null);
+  if (sent) {
+    await interaction.reply({ content: "✅ Fariinta waa la diray!", ephemeral: true });
+  } else {
+    await interaction.reply({ content: "⚠️ Fariinta lama dirin karin.", ephemeral: true });
+  }
+}
+
 // ─── Interaction Handler ──────────────────────────────────────────────────────
 async function handleInteraction(interaction) {
+  if (interaction.isModalSubmit()) {
+    if (interaction.customId.startsWith("say_modal_")) await handleSayModalSubmit(interaction);
+    return;
+  }
   if (!interaction.isButton()) return;
+
+  // !say — button-ka foomka fura
+  if (interaction.customId.startsWith("open_say_")) {
+    const hasPerm = interaction.member?.permissions?.has(PermissionFlagsBits.Administrator)
+      || interaction.member?.permissions?.has(PermissionFlagsBits.ManageMessages);
+    if (!hasPerm) { await interaction.reply({ content: "🔐 Ogolaanshahaaga kuma filan si aad u isticmaalo `!say`.", ephemeral: true }); return; }
+    const targetChannelId = interaction.customId.slice("open_say_".length);
+    const modal = new ModalBuilder()
+      .setCustomId(`say_modal_${targetChannelId}`)
+      .setTitle("📝 Say — Fariin Bot-ku Diro");
+    const contentInput = new TextInputBuilder()
+      .setCustomId("say_content")
+      .setLabel("Content (waajib)")
+      .setStyle(TextInputStyle.Paragraph)
+      .setRequired(true)
+      .setMaxLength(2000);
+    const attachmentInput = new TextInputBuilder()
+      .setCustomId("say_attachment_url")
+      .setLabel("Attachment URL (ikhtiyari — link sawir/file)")
+      .setStyle(TextInputStyle.Short)
+      .setRequired(false);
+    modal.addComponents(
+      new ActionRowBuilder().addComponents(contentInput),
+      new ActionRowBuilder().addComponents(attachmentInput)
+    );
+    await interaction.showModal(modal);
+    return;
+  }
+
   if (await handlePirateInteraction(client, interaction)) return;
   if (await handleSecretAgentInteraction(client, interaction)) return;
   const userId   = interaction.user.id;
