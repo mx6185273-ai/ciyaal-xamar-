@@ -11,7 +11,7 @@ const IMAGES = {
   lobby:      "https://cdn.noctaly.com/servers/859126603619631115/vd3W6aSho7.jpg",
   shacab:     "https://cdn.noctaly.com/servers/859126603619631115/tJGyElBTEm.jpg",
   dhakhtar:   "https://cdn.noctaly.com/servers/859126603619631115/Wb6yHb4_M6.jpg",
-  danbibaare: "https://cdn.noctaly.com/servers/859126603619631115/HogxQZ3daP.jpg",
+  sheriff:    "https://raw.githubusercontent.com/mx6185273-ai/ciyaal-xamar-/main/sheriff-banner.png",
   dilaaye:    "https://cdn.noctaly.com/servers/859126603619631115/1TZ1--f_dY.jpg",
 };
 
@@ -40,9 +40,9 @@ const MEDALS = ["🥇","🥈","🥉","4️⃣","5️⃣","6️⃣","7️⃣","8�
 export function buildLobbyEmbed(game, guild) {
   const players = Array.from(game.players.values());
   const count = players.length;
-  const { dilaaye, dhakhtar, danbibaare } = count >= 5
+  const { dilaaye, dhakhtar, sheriff } = count >= 5
     ? getRoleCounts(count)
-    : { dilaaye: 1, dhakhtar: 1, danbibaare: 1 };
+    : { dilaaye: 1, dhakhtar: 1, sheriff: 1 };
 
   const statusLine = count < 5
     ? `⚠️ Ugu yaraan 5 ciyaaryahan ayaa loo baahan yahay. (${count}/5)`
@@ -63,7 +63,7 @@ export function buildLobbyEmbed(game, guild) {
         value: [
           `🔪 ×${dilaaye} Dilaaye`,
           `🩺 ×${dhakhtar} Dhakhtar`,
-          `🕵️ ×${danbibaare} Danbi-baare`,
+          `⭐ ×${sheriff} Sheriff`,
           `🏠 Shacabka kale`,
         ].join("\n"),
         inline: true,
@@ -145,28 +145,31 @@ export function buildRoleDmEmbed(player, game) {
       .setFooter({ text: "🩺 Dhakhtar · Naf badbaadi!" });
   }
 
-  if (player.role === "danbi-baare") {
+  if (player.role === "sheriff") {
     return new EmbedBuilder()
-      .setTitle("🕵️ DANBI-BAARE")
+      .setTitle("⭐ SHERIFF")
       .setDescription(
-        "**Adiga waxaad tahay Danbi-baare!**\n" +
-        "Habeenta hal qof ayaad baari kartaa — Dilaaye buu yahay mise maya?"
+        "**Adiga waxaad tahay Sheriff!**\n" +
+        "Sheriff waa ilaaliyaha magaalada.\n" +
+        "Habeen kasta wuxuu dooran karaa hal qof oo keliya si uu u toogto.\n\n" +
+        "⚠️ Sheriff wuxuu dili karaa **Dilaayaha (Killer)** oo keliya.\n" +
+        "Haddii uu doorto qof aan Dilaaye ahayn, qofkaas waxba ma gaarayaan, habeenkuna wuu sii soconayaa."
       )
       .setColor(0xffd700)
-      .setImage(IMAGES.danbibaare)
+      .setImage(IMAGES.sheriff)
       .addFields(
         {
-          name: "📌 Tilmaamaha",
+          name: "🎯 Xeerarka Sheriff",
           value: [
-            "🔍 **Habeenta** — DM kaa imaanaysaa, xulo qofka aad baari rabto",
-            "🤖 **Natiijada** — Bot-ku kuu sheegaa: ✅ Dilaaye · ❌ Ma aha",
-            "⚠️ **Xuduud** — Hal baaritaan oo kaliya habeen kasta",
-            "🏆 **Guusha** — Dhammaan Dilaayeyaasha in la saaro",
+            "⭐ Habeen kasta wuxuu leeyahay hal xabbad (1 shot).",
+            "🔪 Wuxuu dili karaa Dilaayaha oo keliya.",
+            "❌ Haddii uu doorto qof aan Dilaaye ahayn, qofkaas ma dhimanayo.",
+            "👥 Sheriff-ku waa inuu qariyaa doorkiisa inta ciyaartu socoto.",
           ].join("\n"),
         },
         { name: `👥 Dhammaan Ciyaaryahanno (${alive.length})`, value: allPlayersList }
       )
-      .setFooter({ text: "🕵️ Danbi-baare · Aqoontaada waa xoogaaga!" });
+      .setFooter({ text: "⭐ Sheriff · Justice Never Sleeps!" });
   }
 
   // Shacab
@@ -183,7 +186,7 @@ export function buildRoleDmEmbed(player, game) {
         name: "📌 Tilmaamaha",
         value: [
           "☀️ **Maalintii** — Cod bixin: shaki qofka u muuqda Dilaaye",
-          "👁️ **Caawiye** — Dhakhtar iyo Danbi-baare waxay kaa caawiyaan",
+          "👁️ **Caawiye** — Dhakhtar iyo Sheriff waxay kaa caawiyaan",
           "🏆 **Guusha** — Dhammaan Dilaayeyaasha in la saaro",
         ].join("\n"),
       },
@@ -199,7 +202,7 @@ export function buildNightEmbed(round, timeLeft) {
       "**Tuuladu way seexatay... laakiin dilaayeyaashu way toosanyihiin.**\n\n" +
       "🔪 Dilaayeyaashu waxay dooranayaan cidda la dilo\n" +
       "🩺 Dhakhtarku wuxuu dooranayaa cidda la badbaadinayo\n" +
-      "🕵️ Danbi-baarahu wuxuu baaraa hal ciyaaryahan"
+      "⭐ Sheriff-ku wuxuu ilaaliyaa magaalada — hal xabbad buu leeyahay"
     )
     .setColor(0x0d0d2b)
     .addFields(
@@ -274,7 +277,7 @@ export function buildNightSaveButtons(alivePlayers, gameChannelId) {
   return rows;
 }
 
-export function buildNightInvestigateButtons(alivePlayers, gameChannelId) {
+export function buildNightSheriffButtons(alivePlayers, gameChannelId) {
   const rows = [];
   const chunks = [];
   for (let i = 0; i < alivePlayers.length; i += 5) chunks.push(alivePlayers.slice(i, i + 5));
@@ -282,11 +285,25 @@ export function buildNightInvestigateButtons(alivePlayers, gameChannelId) {
   for (let i = 0; i < maxRows; i++) {
     const row = new ActionRowBuilder();
     chunks[i].forEach(p => row.addComponents(
-      new ButtonBuilder().setCustomId(`night_investigate_${gameChannelId}_${p.id}`).setLabel(p.displayName.slice(0, 25)).setStyle(ButtonStyle.Primary)
+      new ButtonBuilder().setCustomId(`night_sheriff_${gameChannelId}_${p.id}`).setLabel(`👤 ${p.displayName.slice(0, 25)}`).setStyle(ButtonStyle.Primary)
     ));
     rows.push(row);
   }
   return rows;
+}
+
+export function buildSheriffTurnEmbed(round) {
+  return new EmbedBuilder()
+    .setTitle("⭐ Sheriff's Turn")
+    .setColor(0xffd700)
+    .setDescription(
+      "Waxaad tahay ⭐ **Sheriff**.\n\n" +
+      "🎯 Caawa dooro hal ciyaaryahan.\n\n" +
+      "⚠️ Waxaad dili kartaa oo keliya Dilaayaha.\n\n" +
+      "Haddii aad doorato qof aan Dilaaye ahayn, waxba ma dhacayaan."
+    )
+    .setImage(IMAGES.sheriff)
+    .setFooter({ text: `Wareegga ${round} · Hal xabbad oo kaliya!` });
 }
 
 export function buildVoteResultEmbed(eliminated, voteMap, players) {
@@ -352,10 +369,10 @@ export function buildKickButtons(game, hostId) {
 
 function getRoleLabel(role) {
   const labels = {
-    dilaaye:       "🔪 Dilaaye",
-    dhakhtar:      "🩺 Dhakhtar",
-    "danbi-baare": "🕵️ Danbi-baare",
-    shacab:        "🏠 Shacab",
+    dilaaye:  "🔪 Dilaaye",
+    dhakhtar: "🩺 Dhakhtar",
+    sheriff:  "⭐ Sheriff",
+    shacab:   "🏠 Shacab",
   };
   return labels[role] ?? role;
 }
