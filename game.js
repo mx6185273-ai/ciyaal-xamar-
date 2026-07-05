@@ -23,8 +23,8 @@ export function createGame(guildId, channelId, hostId) {
     votes: [],
     nightKillTarget: null,
     nightSaveTarget: null,
-    // Map: danbibaare player ID → target player ID
-    nightInvestigations: new Map(),
+    // Set: sheriff player IDs oo horeba u isticmaalay xabbadooda habeenkan
+    nightSheriffUsed: new Set(),
     lobbyMessageId: null,
     nightMessageId: null,
     dayMessageId: null,
@@ -45,20 +45,20 @@ export function getGuildGames(guildId) {
 }
 
 export function getRoleCounts(playerCount) {
-  if (playerCount >= 15) return { dilaaye: 3, dhakhtar: 1, danbibaare: 2 };
-  if (playerCount >= 10) return { dilaaye: 2, dhakhtar: 1, danbibaare: 1 };
-  return { dilaaye: 1, dhakhtar: 1, danbibaare: 1 };
+  if (playerCount >= 15) return { dilaaye: 3, dhakhtar: 1, sheriff: 2 };
+  if (playerCount >= 10) return { dilaaye: 2, dhakhtar: 1, sheriff: 1 };
+  return { dilaaye: 1, dhakhtar: 1, sheriff: 1 };
 }
 
 export function assignRoles(game) {
   const playerList = Array.from(game.players.values());
   const count = playerList.length;
-  const { dilaaye: dilaayeCount, danbibaare: danbibaareCount } = getRoleCounts(count);
+  const { dilaaye: dilaayeCount, sheriff: sheriffCount } = getRoleCounts(count);
 
   const roles = [];
   for (let i = 0; i < dilaayeCount; i++) roles.push("dilaaye");
   roles.push("dhakhtar");
-  for (let i = 0; i < danbibaareCount; i++) roles.push("danbi-baare");
+  for (let i = 0; i < sheriffCount; i++) roles.push("sheriff");
   while (roles.length < count) roles.push("shacab");
 
   const shuffled = [...roles].sort(() => Math.random() - 0.5);
