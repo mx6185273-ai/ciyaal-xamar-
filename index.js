@@ -5,9 +5,9 @@ import {
   Client, GatewayIntentBits, Partials, Events, EmbedBuilder,
 } from "discord.js";
 import { joinVoiceChannel, VoiceConnectionStatus, entersState } from "@discordjs/voice";
-import { games, createGame, assignRoles, getAlivePlayers, getGuildGames, addLog } from "./game.js";
+import { games, createGame, assignRoles, getAlivePlayers, getGuildGames, addLog, checkWinCondition } from "./game.js";
 import { buildLobbyEmbed, buildLobbyButtons, buildRoleDmEmbed, buildKickButtons } from "./embeds.js";
-import { startNightPhase } from "./phases.js";
+import { startNightPhase, endGame } from "./phases.js";
 import { handlePirateMessage, handlePirateInteraction } from "./pirate-handler.js";
 import { handleSecretAgentMessage, handleSecretAgentInteraction } from "./secret-agent-handler.js";
 import { startAdminReporter, trackCommand } from "./admin-reporter.js";
@@ -89,9 +89,9 @@ async function handleMessage(msg) {
         { name: "🔐 Owner-ka Kaliya", value: ["`!dm [farriin]` — Shacabka ciyaarta ku jira DM u dir", "`!news [farriin]` — Server walba dhammaan dadka DM u dir"].join("\n") },
         {
           name: "📌 Mafia Doorarka",
-          value: ["🔪 **Dilaaye** — Habeenta ciyaaryahan dila (waa sir)", "🩺 **Dhakhtar** — Habeenta hal qof badbaadi", "🕵️ **Danbi-baare** — Habeenta hal qof baari (Dilaaye mise maya)", "🏠 **Shacab** — Maalinta codbixinta ku saaro Dilaayaha"].join("\n"),
+          value: ["🔪 **Dilaaye** — Habeenta ciyaaryahan dila (waa sir)", "🩺 **Dhakhtar** — Habeenta hal qof badbaadi", "⭐ **Sheriff** — Habeenta hal qof toog (haddii Dilaaye yahay wuu dhintaa, haddii kale waxba ma dhacaan)", "🏠 **Shacab** — Maalinta codbixinta ku saaro Dilaayaha"].join("\n"),
         },
-        { name: "⚙️ Tirada Doorarka", value: ["`5–9`   ciyaaryahan → 1 Dilaaye · 1 Dhakhtar · 1 Danbi-baare", "`10–14` ciyaaryahan → 2 Dilaaye · 1 Dhakhtar · 1 Danbi-baare", "`15–20` ciyaaryahan → 3 Dilaaye · 1 Dhakhtar · 2 Danbi-baare"].join("\n") },
+        { name: "⚙️ Tirada Doorarka", value: ["`5–9`   ciyaaryahan → 1 Dilaaye · 1 Dhakhtar · 1 Sheriff", "`10–14` ciyaaryahan → 2 Dilaaye · 1 Dhakhtar · 1 Sheriff", "`15–20` ciyaaryahan → 3 Dilaaye · 1 Dhakhtar · 2 Sheriff"].join("\n") },
 
         {
           name: "🏴‍☠️ Pirate Treasure Hunt — Ciyaarta Cusub",
@@ -329,17 +329,59 @@ async function handleInteraction(interaction) {
     return;
   }
 
-  if (customId.startsWith("night_investigate_")) {
-    const parsed = parseNightCustomId(customId, "night_investigate_");
+  if (customId.startsWith("night_sheriff_")) {
+    const parsed = parseNightCustomId(customId, "night_sheriff_");
     if (!parsed) { await interaction.reply({ content: "⚠️ Cilad dhacday.", ephemeral: true }); return; }
     const game = games.get(parsed.gameChannelId);
     if (!game || game.phase !== "night") { await interaction.reply({ content: "⚠️ Habeenka ma socdo hadda.", ephemeral: true }); return; }
     const player = game.players.get(userId);
-    if (!player || player.role !== "danbi-baare" || !player.alive) { await interaction.reply({ content: "⚠️ Adigu ma tahid Danbi-baare nool.", ephemeral: true }); return; }
-    if (game.nightInvestigations.has(userId)) { await interaction.reply({ content: "⚠️ Hore baad baarisay habeentan. Hal baaritaan oo kaliya.", ephemeral: true }); return; }
-    game.nightInvestigations.set(userId, parsed.targetId);
+    if (!player || player.role !== "sheriff" || !player.alive) { await interaction.reply({ content: "⚠️ Adigu ma tahid Sheriff nool.", ephemeral: true }); return; }
+    if (!game.nightSheriffUsed) game.nightSheriffUsed = new Set();
+    if (game.nightSheriffUsed.has(userId)) { await interaction.reply({ content: "⚠️ Hal xabbad oo kaliya ayaad haysataa habeen kasta — waad isticmaashay!", ephemeral: true }); return; }
+    game.nightSheriffUsed.add(userId);
+
     const target = game.players.get(parsed.targetId);
-    if (target) await interaction.reply({ content: `🔍 **${target.displayName}** — ${target.role === "dilaaye" ? "✅ WAA DILAAYE! 🔪" : "❌ Ma aha Dilaaye"}`, ephemeral: true });
+    const guildName = (await client.guilds.fetch(game.guildId).catch(() => null))?.name ?? "Unknown";
+
+    if (!target || !target.alive) {
+      await interaction.reply({ content: "⚠️ Ciyaaryahankaan lama heli karo.", ephemeral: true });
+      return;
+    }
+
+    if (target.role === "dilaaye") {
+      target.alive = false;
+      addLog(game.guildId, guildName, `💥 Sheriff ${player.displayName} wuxuu toogtay Dilaayaha ${target.displayName}!`);
+      await interaction.reply({
+        content: `💥 **Sheriff ayaa toogtay ${target.displayName}!**\n🔪 ${target.displayName} wuxuu ahaa Dilaayaha.\n🎉 Dilaayaha waa la dilay!`,
+        ephemeral: true,
+      });
+
+      const channel = await client.channels.fetch(game.channelId).catch(() => null);
+      if (channel) {
+        const sheriffEmbed = new EmbedBuilder()
+          .setTitle("💥 SHERIFF-KU WUU TOOGTAY!")
+          .setColor(0xffd700)
+          .setDescription(
+            `⭐ **Sheriff-ku** habeenkii wuxuu toogtay **${target.displayName}**!\n` +
+            `🔪 Waxa uu ahaa **Dilaayaha**!\n` +
+            `🎉 **Dilaayaha waa la dilay!**`
+          )
+          .setFooter({ text: "Ciyaal Xamar · Mafia Game" });
+        await channel.send({ embeds: [sheriffEmbed] }).catch(() => null);
+      }
+
+      const winner = checkWinCondition(game);
+      if (winner) {
+        if (game.phaseTimer) { clearTimeout(game.phaseTimer); game.phaseTimer = null; }
+        await endGame(client, game, winner);
+      }
+    } else {
+      addLog(game.guildId, guildName, `❌ Sheriff ${player.displayName} wuxuu toogtay ${target.displayName} — ma ahayn Dilaaye`);
+      await interaction.reply({
+        content: `❌ **${target.displayName}** ma aha Dilaaye.\n🛡️ Sheriff wuxuu dili karaa oo keliya Dilaayaha.\n🌙 Habeenku wuu sii socdaa...`,
+        ephemeral: true,
+      });
+    }
     return;
   }
 
