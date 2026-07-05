@@ -35,12 +35,24 @@ const client = new Client({
   partials: [Partials.Channel],
 });
 
+// ─── Crash Protection — bot-ku waa inuusan weligiis crash gareyn ─────────────
+process.on("unhandledRejection", (reason) => {
+  console.error("⚠️ Unhandled promise rejection (waa la iska indhatiray):", reason?.message || reason);
+});
+process.on("uncaughtException", (err) => {
+  console.error("⚠️ Uncaught exception (waa la iska indhatiray):", err?.message || err);
+});
+
 client.once(Events.ClientReady, (c) => {
   console.log(`✅ Bot diyaar: ${c.user.tag} | ${c.guilds.cache.size} server`);
   startAdminReporter(c);
 });
-client.on(Events.MessageCreate, (msg) => handleMessage(msg));
-client.on(Events.InteractionCreate, (interaction) => handleInteraction(interaction));
+client.on(Events.MessageCreate, (msg) => {
+  handleMessage(msg).catch(err => console.error("⚠️ MessageCreate error:", err?.message || err));
+});
+client.on(Events.InteractionCreate, (interaction) => {
+  handleInteraction(interaction).catch(err => console.error("⚠️ InteractionCreate error:", err?.message || err));
+});
 client.login(token).catch(err => { console.error("❌ Login failed:", err.message); process.exit(1); });
 
 // ─── Voice Helper ─────────────────────────────────────────────────────────────
