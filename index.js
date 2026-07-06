@@ -100,35 +100,16 @@ async function handleMessage(msg) {
         { name: "🔪 Mafia Ciyaarta", value: ["`!dilaay` — Lobby cusub bilow (adiga waxaad noqon doontaa host)", "`!kasaar` — Host: ciyaaryahan lobby ka saar"].join("\n") },
         { name: "🎧 Voice Channel — 24/7", value: ["`!join` — Bot-ka VC-ga ku soo gal (24/7 joogayaa)", "`!leave` — Bot-ka VC-ka ka saar"].join("\n") },
         { name: "🆘 Caawimo & Xiriir", value: ["`!icaawi [farriin]` — Cilad ama su'aal owner-ka u dir", "  _Tusaale: `!icaawi Bot-ka lobby kuma furin`_"].join("\n") },
-        { name: "🔐 Owner-ka Kaliya", value: ["`!dm [farriin]` — Shacabka ciyaarta ku jira DM u dir", "`!news [farriin]` — Server walba dhammaan dadka DM u dir"].join("\n") },
-        { name: "📝 Admin — Say Command", value: ["`!say` — Foom modal ah furo si bot-ku fariin idinku dhaha (Admin/Manage Messages)"].join("\n") },
+        { name: "📝 Say Command", value: ["`!say` — Foom modal ah furo si bot-ku fariin idinku dhaha (Admin/Manage Messages)"].join("\n") },
         {
-          name: "📌 Mafia Doorarka",
-          value: ["🔪 **Dilaaye** — Habeenta ciyaaryahan dila (waa sir)", "🩺 **Dhakhtar** — Habeenta hal qof badbaadi", "⭐ **Sheriff** — Habeenta hal qof toog (haddii Dilaaye yahay wuu dhintaa, haddii kale waxba ma dhacaan)", "🏠 **Shacab** — Maalinta codbixinta ku saaro Dilaayaha"].join("\n"),
-        },
-        { name: "⚙️ Tirada Doorarka", value: ["`5–9`   ciyaaryahan → 1 Dilaaye · 1 Dhakhtar · 1 Sheriff", "`10–14` ciyaaryahan → 2 Dilaaye · 1 Dhakhtar · 1 Sheriff", "`15–20` ciyaaryahan → 3 Dilaaye · 1 Dhakhtar · 2 Sheriff"].join("\n") },
-
-        {
-          name: "🏴‍☠️ Pirate Treasure Hunt — Ciyaarta Cusub",
+          name: "🏴‍☠️ Pirate Treasure Hunt",
           value: [
             "`!pirate` — Lobby cusub bilow (2–20 ciyaaryahan, elimination mode)",
             "`!shop` — Alaabta lagu iibsan karo arag (Shield, Lucky Compass, Treasure Map)",
             "`!buy shield` — 🛡️ 1,000 Gold · Deadly Trap kaa badbaadiya (2 mar)",
             "`!buy compass` — 🧭 2,000 Gold · Treasure fursad kordhiya",
             "`!buy map` — 🗺️ 10 Gems · Jasiirad ammaan ah tilmaamiya",
-            "`!inventory` — 🎒 Items, Gold iyo Gems-kaaga arag",
-            "`!daily` — 🎁 500 Gold + 1 Gem qaado (24 saac kasta)",
             "`!leaderboard` — 🏆 Top 10 Pirates ee ugu badnaa Gold",
-          ].join("\n"),
-        },
-        {
-          name: "⚓ Sida Pirate Ciyaaruhu u Shaqeyso",
-          value: [
-            "🏝️ Kasta round jasiirad dooro (A–E) — 30 ilbiriqsi",
-            "💰 Treasure Found +200–500 Gold · 💎 Rare Treasure +1–2 Gems",
-            "📦 Item Found: Shield ama Lucky Compass",
-            "☠️ Trap: Gold luminta · 💥 Deadly Trap: Ciyaarta waad ka baxaysaa",
-            "👑 Hal burcad-badeed oo keliya ayaa guuleysta!",
           ].join("\n"),
         }
       )
@@ -192,21 +173,20 @@ async function handleMessage(msg) {
     return;
   }
 
-  // ── !dm — Owner kaliya: Shacabka ciyaarta DM u dir ─────────────────────────
+  // ── !dm — Owner kaliya: qof gaar ah DM fariin toos ah u dir ────────────────
   if (content.startsWith("!dm")) {
     if (!isOwner) { await msg.reply("🔐 Amarka `!dm` kaliya owner-ku wuxuu isticmaali karaa."); return; }
-    const farriin = raw.slice("!dm".length).trim();
-    if (!farriin) { await msg.reply("⚠️ Fariinta qor kadib `!dm`.\n_Tusaale: `!dm Ciyaarta 5 daqiiqo kadib way bilaabantahay!`_"); return; }
+    const rest = raw.slice("!dm".length).trim();
+    const match = rest.match(/^<@!?(\d{15,25})>\s*([\s\S]*)$/) || rest.match(/^(\d{15,25})\s+([\s\S]*)$/);
+    if (!match || !match[2]?.trim()) {
+      await msg.reply("⚠️ Isticmaal: `!dm @user farriinta` ama `!dm userID farriinta`.\n_Tusaale: `!dm @Ahmed Salaan, sidee tahay?`_");
+      return;
+    }
+    const targetId = match[1];
+    const farriin  = match[2].trim();
 
-    const game = games.get(channelId);
-    if (!game || game.phase === "ended") { await msg.reply("⚠️ Kanaalkan ciyaaro firfircoon ma jirto. `!dilaay` bilow marka hore."); return; }
-
-    // Lobby: dhammaan players; Ciyaar: Shacabka kaliya (nool)
-    const targets = game.phase === "lobby"
-      ? Array.from(game.players.values())
-      : Array.from(game.players.values()).filter(p => p.alive && p.role === "shacab");
-
-    if (targets.length === 0) { await msg.reply("⚠️ Hadda Shacab nool ma jiraan."); return; }
+    const user = await client.users.fetch(targetId).catch(() => null);
+    if (!user) { await msg.reply("⚠️ Qofkaan lama helin. Hubi ID-ga ama mention-ka."); return; }
 
     const dmEmbed = new EmbedBuilder()
       .setTitle("📢 Farriin — Ciyaal Xamar")
@@ -215,16 +195,13 @@ async function handleMessage(msg) {
       .setFooter({ text: `${msg.guild.name} · Ciyaal Xamar Bot` })
       .setTimestamp();
 
-    await msg.reply(`⏳ ${targets.length} qof loo dirayo farriin...`);
-    let guulayste = 0, fashilmay = 0;
-    for (const player of targets) {
-      const user = await client.users.fetch(player.id).catch(() => null);
-      if (!user) { fashilmay++; continue; }
-      const ok = await user.send({ embeds: [dmEmbed] }).then(() => true).catch(() => false);
-      if (ok) guulayste++; else fashilmay++;
+    const ok = await user.send({ embeds: [dmEmbed] }).then(() => true).catch(() => false);
+    if (ok) {
+      addLog(guildId, msg.guild.name, `📢 Owner wuxuu DM fariin u diray ${user.username}`);
+      await msg.reply(`✅ Fariinta waxaa la diray **${user.username}**.`);
+    } else {
+      await msg.reply(`⚠️ Fariinta lama dirin karin **${user.username}** — DM-kiisu waa xidnaan karaa.`);
     }
-    addLog(guildId, msg.guild.name, `📢 Owner wuxuu farriin u diray ${guulayste} Shacab`);
-    await msg.channel.send(`✅ **Fariinta la gaarsiiiyay!**\n📨 La diray: **${guulayste}** · ❌ Waa xidnaa: **${fashilmay}**`).catch(() => null);
     return;
   }
 
@@ -301,10 +278,15 @@ async function handleMessage(msg) {
     const hasPerm = msg.member?.permissions?.has(PermissionFlagsBits.Administrator)
       || msg.member?.permissions?.has(PermissionFlagsBits.ManageMessages);
     if (!hasPerm) { await msg.reply("🔐 Amarka `!say` waxaa isticmaali kara oo keliya **Administrator** ama qof leh **Manage Messages** permission."); return; }
+    await msg.delete().catch(() => null);
     const row = new ActionRowBuilder().addComponents(
       new ButtonBuilder().setCustomId(`open_say_${msg.channel.id}`).setLabel("📝 Buuxi Foomka").setStyle(ButtonStyle.Primary)
     );
-    await msg.reply({ content: "Riix batoonka hoose si aad u buuxiso foomka fariinta:", components: [row] });
+    const dmSent = await msg.author.send({ content: "Riix batoonka hoose si aad u buuxiso foomka fariinta:", components: [row] }).then(() => true).catch(() => false);
+    if (!dmSent) {
+      const warn = await msg.channel.send(`⚠️ ${msg.author}, DM-kaaga waa xidnaan karaa. Fadlan furan DM-ka si aad u isticmaasho \`!say\`.`).catch(() => null);
+      if (warn) setTimeout(() => warn.delete().catch(() => null), 8000);
+    }
     return;
   }
 }
