@@ -11,6 +11,7 @@ import { startNightPhase } from "./phases.js";
 import { handlePirateMessage, handlePirateInteraction } from "./pirate-handler.js";
 import { handleBombMessage, handleBombInteraction } from "./bomb-handler.js";
 import { startAdminReporter, trackCommand, pushLog } from "./admin-reporter.js";
+import { getUser, addGold } from "./pirate-db.js";
 
 const MAX_GAMES_PER_GUILD = 5;
 const OWNER_ID = "725076744251637760";
@@ -288,6 +289,35 @@ async function handleMessage(msg) {
     await msg.channel.send(
       `📰 **News la diray!**\n🌐 Serverro: **${guilds.length}**\n👥 Dadka la yiqiin: **${totalMembers}**\n✅ La diray: **${totalSent}**\n❌ DM xidnaa: **${totalFailed}**`
     ).catch(() => null);
+    return;
+  }
+
+  // ── !balance — Eeg lacagtaada ────────────────────────────────────────────────
+  if (content === "!balance") {
+    const target = msg.mentions.users.first() || msg.author;
+    const user = getUser(target.id, target.username);
+    if ((user.gold || 0) <= 0) {
+      await msg.reply(`💰 **${target.username}** lacagtiisu waa **$0**.\n⚠️ Haraaga kuguma filna lacagta, fadlan lacag ku shubo!`);
+      return;
+    }
+    await msg.reply(`💰 **${target.username}** balance-kiisu waa: **$${(user.gold || 0).toLocaleString()}**`);
+    return;
+  }
+
+  // ── !givecash — Owner kaliya: lacag ku sii qof ──────────────────────────────
+  if (content.startsWith("!givecash")) {
+    if (!isOwner) { await msg.reply("🔐 Amarka `!givecash` kaliya owner-ku wuxuu isticmaali karaa."); return; }
+    const target = msg.mentions.users.first();
+    const parts = raw.trim().split(/\s+/);
+    const amountStr = parts.find((p, i) => i > 0 && !p.startsWith("<@"));
+    const amount = parseInt(amountStr, 10);
+    if (!target || !amountStr || isNaN(amount) || amount <= 0) {
+      await msg.reply("⚠️ Isticmaal sidan: `!givecash @user 1000`");
+      return;
+    }
+    const updated = addGold(target.id, target.username, amount);
+    await msg.reply(`✅ **$${amount.toLocaleString()}** waxaa la siiyay **${target.username}**.\n💰 Balance cusub: **$${(updated.gold || 0).toLocaleString()}**`);
+    addLog(guildId, msg.guild.name, `💵 Owner wuxuu $${amount.toLocaleString()} siiyay ${target.username}`);
     return;
   }
 
