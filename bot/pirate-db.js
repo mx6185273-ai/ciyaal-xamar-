@@ -32,7 +32,7 @@ export function getUser(userId, username) {
     data.users[userId] = {
       id: userId,
       username,
-      gold: 0,
+      gold: 5000,
       gems: 0,
       totalGold: 0,
       totalWins: 0,
