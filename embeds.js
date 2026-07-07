@@ -8,7 +8,7 @@ import {
 import { getAlivePlayers, getDilaayePlayers, getRoleCounts } from "./game.js";
 
 const IMAGES = {
-  lobby:      "https://cdn.discordapp.com/attachments/1470820767204638742/1523824380075970670/IMG_6568.jpg?ex=6a4e2c4b&is=6a4cdacb&hm=e5edcb48a5ea1a3c72e6e5233b426e9c39dea6ebb83a9f3b79b3484b742b5f45",
+  lobby:      "https://cdn.discordapp.com/attachments/1470820767204638742/1524083492114272387/IMG_6571.jpg?ex=6a4e74dc&is=6a4d235c&hm=9e395f3dddb3ac9597370519bae2140a66a818fbc2970dec1a99762948a03e74",
   shacab:     "https://cdn.noctaly.com/servers/859126603619631115/tJGyElBTEm.jpg",
   dhakhtar:   "https://cdn.noctaly.com/servers/859126603619631115/Wb6yHb4_M6.jpg",
   sheriff:    "https://raw.githubusercontent.com/mx6185273-ai/ciyaal-xamar-/main/sheriff-banner.png",
