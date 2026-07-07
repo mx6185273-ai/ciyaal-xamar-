@@ -1,5 +1,6 @@
 // index.js — Ciyaal Xamar Discord Bot
 // Commands: !dilaay !kasaar !join !leave !help !icaawi !dm !news
+process.on('warning', (w) => { if (w.code === 'DEP0138') return; process.stderr.write(w.stack + '\n'); });
 import 'dotenv/config';
 import {
   Client, GatewayIntentBits, Partials, Events, EmbedBuilder,
