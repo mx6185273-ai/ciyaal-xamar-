@@ -1,0 +1,20 @@
+{
+  "name": "@workspace/discord-bot",
+  "version": "1.1.0",
+  "description": "Ciyaal Xamar — Discord Mafia + Pirate Treasure Hunt Bot",
+  "type": "module",
+  "main": "index.js",
+  "scripts": {
+    "start": "node --no-deprecation index.js",
+    "dev": "node --no-deprecation --watch index.js"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "@discordjs/voice": "^0.17.0",
+    "discord.js": "^14.26.4",
+    "dotenv": "^16.6.1",
+    "libsodium-wrappers": "^0.7.16"
+  }
+}
