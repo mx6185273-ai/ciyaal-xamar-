@@ -12,6 +12,8 @@ import { buildLobbyEmbed, buildLobbyButtons, buildRoleDmEmbed, buildKickButtons 
 import { startNightPhase, endGame } from "./phases.js";
 import { handlePirateMessage, handlePirateInteraction } from "./pirate-handler.js";
 import { handleSecretAgentMessage, handleSecretAgentInteraction } from "./secret-agent-handler.js";
+import { handleBombMessage, handleBombInteraction } from "./bomb-handler.js";
+import { getBalance, addCash } from "./economy.js";
 import { startAdminReporter, trackCommand } from "./admin-reporter.js";
 
 const MAX_GAMES_PER_GUILD = 5;
@@ -84,6 +86,7 @@ async function handleMessage(msg) {
   if (msg.author.bot || !msg.guild) return;
   if (await handlePirateMessage(client, msg)) return;
   if (await handleSecretAgentMessage(client, msg)) return;
+  if (await handleBombMessage(client, msg)) return;
   const content  = msg.content.trim().toLowerCase();
   const raw      = msg.content.trim();
   const channelId = msg.channel.id;
@@ -101,6 +104,13 @@ async function handleMessage(msg) {
         { name: "🎧 Voice Channel — 24/7", value: ["`!join` — Bot-ka VC-ga ku soo gal (24/7 joogayaa)", "`!leave` — Bot-ka VC-ka ka saar"].join("\n") },
         { name: "🆘 Caawimo & Xiriir", value: ["`!icaawi [farriin]` — Cilad ama su'aal owner-ka u dir", "  _Tusaale: `!icaawi Bot-ka lobby kuma furin`_"].join("\n") },
         { name: "📝 Say Command", value: ["`!say` — Foom modal ah furo si bot-ku fariin idinku dhaha (Admin/Manage Messages)"].join("\n") },
+        {
+          name: "💣 Bomb Survival & Economy",
+          value: [
+            "`!bomb` — Lobby cusub bilow (2–8 ciyaaryahan, bet lacag, last survivor guulaysta)",
+            "`!balance` — Lacagtaada hadda arag",
+          ].join("\n"),
+        },
         {
           name: "🏴‍☠️ Pirate Treasure Hunt",
           value: [
@@ -273,6 +283,42 @@ async function handleMessage(msg) {
     return;
   }
 
+  // ── !balance ────────────────────────────────────────────────────────────────
+  if (content === "!balance") {
+    const bal = getBalance(msg.author.id, msg.author.username);
+    await msg.reply({ embeds: [
+      new EmbedBuilder()
+        .setTitle("💰 Wallet-kaaga")
+        .setColor(0xf59e0b)
+        .setDescription(bal === 0
+          ? "⚠️ **Haragaagu waa eber ($0)**\n\n_Ma lihid lacag aad ku ciyaari karto. Maamulaha waydiiso._"
+          : `💵 **Lacagtaada hadda: $${bal.toLocaleString()}**`)
+        .setFooter({ text: `${msg.author.username} · Ciyaal Xamar Economy` })
+        .setTimestamp()
+    ]});
+    return;
+  }
+
+  // ── !givecash — Owner kaliya: qof lacag sii ────────────────────────────────
+  if (content.startsWith("!givecash")) {
+    if (msg.author.id !== OWNER_ID) { await msg.reply("🔐 Amarka `!givecash` kaliya owner-ku wuxuu isticmaali karaa."); return; }
+    const parts = raw.slice("!givecash".length).trim().split(/\s+/);
+    const mention = parts[0];
+    const amount  = parseInt(parts[1], 10);
+    const match   = mention?.match(/^<@!?(\d+)>$/) || [null, mention?.match(/^\d{15,25}$/) ? mention : null];
+    const targetId = match[1] ?? (mention?.match(/^\d{15,25}$/) ? mention : null);
+    if (!targetId || !amount || isNaN(amount) || amount <= 0) {
+      await msg.reply("⚠️ Isticmaal: `!givecash @user lacagta`\n_Tusaale: `!givecash @Ahmed 10000`_");
+      return;
+    }
+    const user = await client.users.fetch(targetId).catch(() => null);
+    if (!user) { await msg.reply("⚠️ Qofkaan lama helin. Hubi mention-ka ama ID-ga."); return; }
+    const newBal = addCash(targetId, user.username, amount);
+    addLog(guildId, msg.guild.name, `💰 Owner wuxuu siiyay ${user.username} $${amount.toLocaleString()}`);
+    await msg.reply(`✅ **$${amount.toLocaleString()}** waxaa la siiyay **${user.displayName ?? user.username}**.\n💰 Haraagaaga cusub: **$${newBal.toLocaleString()}**`);
+    return;
+  }
+
   // ── !say — Admin/Manage Messages kaliya: modal fur si loo diro fariin ─────
   if (content === "!say") {
     const hasPerm = msg.member?.permissions?.has(PermissionFlagsBits.Administrator)
@@ -353,6 +399,7 @@ async function handleInteraction(interaction) {
     return;
   }
 
+  if (await handleBombInteraction(client, interaction)) return;
   if (await handlePirateInteraction(client, interaction)) return;
   if (await handleSecretAgentInteraction(client, interaction)) return;
   const userId   = interaction.user.id;
