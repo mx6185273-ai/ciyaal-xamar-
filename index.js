@@ -109,6 +109,7 @@ async function handleMessage(msg) {
           value: [
             "`!bomb` — Lobby cusub bilow (2–8 ciyaaryahan, bet lacag, last survivor guulaysta)",
             "`!balance` — Lacagtaada hadda arag",
+            "`!givecash @user lacag` — 💰 Owner: qof lacag shub (sidoo kale `!give @user lacag`)",
           ].join("\n"),
         },
         {
@@ -309,6 +310,26 @@ async function handleMessage(msg) {
     const targetId = match[1] ?? (mention?.match(/^\d{15,25}$/) ? mention : null);
     if (!targetId || !amount || isNaN(amount) || amount <= 0) {
       await msg.reply("⚠️ Isticmaal: `!givecash @user lacagta`\n_Tusaale: `!givecash @Ahmed 10000`_");
+      return;
+    }
+    const user = await client.users.fetch(targetId).catch(() => null);
+    if (!user) { await msg.reply("⚠️ Qofkaan lama helin. Hubi mention-ka ama ID-ga."); return; }
+    const newBal = addCash(targetId, user.username, amount);
+    addLog(guildId, msg.guild.name, `💰 Owner wuxuu siiyay ${user.username} $${amount.toLocaleString()}`);
+    await msg.reply(`✅ **$${amount.toLocaleString()}** waxaa la siiyay **${user.displayName ?? user.username}**.\n💰 Haraagaaga cusub: **$${newBal.toLocaleString()}**`);
+    return;
+  }
+
+  // ── !give — alias for !givecash (Owner kaliya) ──────────────────────────────
+  if (content.startsWith("!give ") || content === "!give") {
+    if (msg.author.id !== OWNER_ID) { await msg.reply("🔐 Amarka `!give` kaliya owner-ku wuxuu isticmaali karaa."); return; }
+    const parts = raw.slice("!give".length).trim().split(/\s+/);
+    const mention = parts[0];
+    const amount  = parseInt(parts[1], 10);
+    const match   = mention?.match(/^<@!?(\d+)>$/) || [null, mention?.match(/^\d{15,25}$/) ? mention : null];
+    const targetId = match[1] ?? (mention?.match(/^\d{15,25}$/) ? mention : null);
+    if (!targetId || !amount || isNaN(amount) || amount <= 0) {
+      await msg.reply("⚠️ Isticmaal: `!give @user lacagta`\n_Tusaale: `!give @Ahmed 10000`_");
       return;
     }
     const user = await client.users.fetch(targetId).catch(() => null);
