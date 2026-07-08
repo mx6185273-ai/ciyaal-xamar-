@@ -11,6 +11,8 @@ const IMAGES = {
   shacab:   "https://cdn.noctaly.com/servers/859126603619631115/tJGyElBTEm.jpg",
   dhakhtar: "https://cdn.noctaly.com/servers/859126603619631115/Wb6yHb4_M6.jpg",
   dilaaye:  "https://cdn.noctaly.com/servers/859126603619631115/1TZ1--f_dY.jpg",
+  lobby:    "https://cdn.discordapp.com/attachments/1470820767204638742/1524440715499667686/IMG_7945.png?ex=6a4fc18d&is=6a4e700d&hm=d07331606f79bec7a892d5375fa216a66f1b40c5577043ee6c499471fb65a5b2",
+  atoore:   "https://cdn.discordapp.com/attachments/1470820767204638742/1524437607679787099/AE318162-39A2-4D9C-80F0-9CBF106C8E41.png?ex=6a4fbea8&is=6a4e6d28&hm=a6294472ad11006ae2c9fbefd19cbc963436ad99e140a094cede4064d835049b",
 };
 
 // Golbi timer bar — maalinta codbixinta
@@ -53,6 +55,7 @@ export function buildLobbyEmbed(game, guild) {
       "Host-ku wuxuu bilaabi karaa marka dhammaantood diyaar yihiin."
     )
     .setColor(0x1a1a2e)
+    .setImage(IMAGES.lobby)
     .addFields(
       { name: "👥 Ciyaaryahanno", value: `**${count}** / 20`, inline: true },
       {
@@ -60,7 +63,7 @@ export function buildLobbyEmbed(game, guild) {
         value: [
           `🔪 ×${dilaaye} Dilaaye`,
           `🩺 ×${dhakhtar} Dhakhtar`,
-          `⭐ ×${sheriff} Sheriff`,
+          `⭐ ×${sheriff} Atoore`,
           `🏠 Shacabka kale`,
         ].join("\n"),
         inline: true,
@@ -144,28 +147,29 @@ export function buildRoleDmEmbed(player, game) {
 
   if (player.role === "sheriff") {
     return new EmbedBuilder()
-      .setTitle("⭐ SHERIFF")
+      .setTitle("⭐ ATOORE")
       .setDescription(
-        "**Adiga waxaad tahay Sheriff!**\n" +
-        "Sheriff waa ilaaliyaha magaalada.\n" +
+        "**Adiga waxaad tahay Atoore!**\n" +
+        "Atoore waa ilaaliyaha magaalada.\n" +
         "Habeen kasta wuxuu dooran karaa hal qof oo keliya si uu u toogto.\n\n" +
-        "⚠️ Sheriff wuxuu dili karaa **Dilaayaha (Killer)** oo keliya.\n" +
+        "⚠️ Atoore wuxuu dili karaa **Dilaayaha (Killer)** oo keliya.\n" +
         "Haddii uu doorto qof aan Dilaaye ahayn, qofkaas waxba ma gaarayaan, habeenkuna wuu sii soconayaa."
       )
       .setColor(0xffd700)
+      .setImage(IMAGES.atoore)
       .addFields(
         {
-          name: "🎯 Xeerarka Sheriff",
+          name: "🎯 Xeerarka Atoore",
           value: [
             "⭐ Habeen kasta wuxuu leeyahay hal xabbad (1 shot).",
             "🔪 Wuxuu dili karaa Dilaayaha oo keliya.",
             "❌ Haddii uu doorto qof aan Dilaaye ahayn, qofkaas ma dhimanayo.",
-            "👥 Sheriff-ku waa inuu qariyaa doorkiisa inta ciyaartu socoto.",
+            "👥 Atoore waa inuu qariyaa doorkiisa inta ciyaartu socoto.",
           ].join("\n"),
         },
         { name: `👥 Dhammaan Ciyaaryahanno (${alive.length})`, value: allPlayersList }
       )
-      .setFooter({ text: "⭐ Sheriff · Justice Never Sleeps!" });
+      .setFooter({ text: "⭐ Atoore · Justice Never Sleeps!" });
   }
 
   // Shacab
@@ -198,7 +202,7 @@ export function buildNightEmbed(round, timeLeft) {
       "**Tuuladu way seexatay... laakiin dilaayeyaashu way toosanyihiin.**\n\n" +
       "🔪 Dilaayeyaashu waxay dooranayaan cidda la dilo\n" +
       "🩺 Dhakhtarku wuxuu dooranayaa cidda la badbaadinayo\n" +
-      "⭐ Sheriff-ku wuxuu ilaaliyaa magaalada — hal xabbad buu leeyahay"
+      "⭐ Atoore wuxuu ilaaliyaa magaalada — hal xabbad buu leeyahay"
     )
     .setColor(0x0d0d2b)
     .addFields(
@@ -290,10 +294,10 @@ export function buildNightSheriffButtons(alivePlayers, gameChannelId) {
 
 export function buildSheriffTurnEmbed(round) {
   return new EmbedBuilder()
-    .setTitle("⭐ Sheriff's Turn")
+    .setTitle("⭐ Atoore's Turn")
     .setColor(0xffd700)
     .setDescription(
-      "Waxaad tahay ⭐ **Sheriff**.\n\n" +
+      "Waxaad tahay ⭐ **Atoore**.\n\n" +
       "🎯 Caawa dooro hal ciyaaryahan.\n\n" +
       "⚠️ Waxaad dili kartaa oo keliya Dilaayaha.\n\n" +
       "Haddii aad doorato qof aan Dilaaye ahayn, waxba ma dhacayaan."
@@ -366,7 +370,7 @@ function getRoleLabel(role) {
   const labels = {
     dilaaye:  "🔪 Dilaaye",
     dhakhtar: "🩺 Dhakhtar",
-    sheriff:  "⭐ Sheriff",
+    sheriff:  "⭐ Atoore",
     shacab:   "🏠 Shacab",
   };
   return labels[role] ?? role;

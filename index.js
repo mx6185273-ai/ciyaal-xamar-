@@ -1,5 +1,5 @@
 // index.js — Ciyaal Xamar Discord Bot
-// Commands: !dilaay !kasaar !join !leave !help !icaawi !dm !news !say
+// Commands: !dilaay !kasaar !join !leave !help !icaawi !dm !news !say !dashboard
 import 'dotenv/config';
 import {
   Client, GatewayIntentBits, Partials, Events, EmbedBuilder,
@@ -123,6 +123,7 @@ async function handleMessage(msg) {
       .setDescription("Waa kuwan dhammaan amarrada bot-ka:")
       .addFields(
         { name: "🔪 Mafia Ciyaarta", value: ["`!dilaay` — Lobby cusub bilow (adiga waxaad noqon doontaa host)", "`!kasaar` — Host: ciyaaryahan lobby ka saar"].join("\n") },
+        { name: "📊 Owner Commands", value: ["`!dashboard` — Serverrada bot ku jira oo dhan arag (Owner kaliya)"].join("\n") },
         { name: "🎧 Voice Channel — 24/7", value: ["`!join` — Bot-ka VC-ga ku soo gal (24/7 joogayaa)", "`!leave` — Bot-ka VC-ka ka saar"].join("\n") },
         { name: "🆘 Caawimo & Xiriir", value: ["`!icaawi [farriin]` — Cilad ama su'aal owner-ka u dir", "  _Tusaale: `!icaawi Bot-ka lobby kuma furin`_"].join("\n") },
         { name: "📝 Say Command", value: ["`!say` — Foom modal ah furo si bot-ku fariin idinku dhaha (Admin/Manage Messages)"].join("\n") },
@@ -255,6 +256,46 @@ async function handleMessage(msg) {
     await msg.channel.send(
       `📰 **News la diray!**\n🌐 Serverro: **${guilds.length}**\n👥 Dadka la yiqiin: **${totalMembers}**\n✅ La diray: **${totalSent}**\n❌ DM xidnaa: **${totalFailed}**`
     ).catch(() => null);
+    return;
+  }
+
+  // ── !dashboard — Owner kaliya: server liis ────────────────────────────────
+  if (content === "!dashboard") {
+    if (!isOwner) { await msg.reply("🔐 Amarka `!dashboard` kaliya owner-ku wuxuu isticmaali karaa."); return; }
+    const guilds = Array.from(client.guilds.cache.values());
+    if (guilds.length === 0) { await msg.reply("⚠️ Bot-ku wali server kuma biirin."); return; }
+
+    const chunks = [];
+    for (let i = 0; i < guilds.length; i += 10) chunks.push(guilds.slice(i, i + 10));
+
+    for (let ci = 0; ci < chunks.length; ci++) {
+      const chunk = chunks[ci];
+      const fields = await Promise.all(chunk.map(async (g) => {
+        let memberCount = g.memberCount ?? "?";
+        const activeGames = getGuildGames(g.id).filter(gm => gm.phase !== "ended").length;
+        return {
+          name: `🏠 ${g.name}`,
+          value: [
+            `\`ID:\` ${g.id}`,
+            `👑 Owner: \`${g.ownerId}\``,
+            `👥 Members: **${memberCount}**`,
+            `🎮 Active games: **${activeGames}**`,
+            `📅 Bot joined: <t:${Math.floor(g.joinedTimestamp / 1000)}:R>`,
+          ].join("\n"),
+          inline: false,
+        };
+      }));
+
+      const embed = new EmbedBuilder()
+        .setTitle(`📊 Dashboard — Serverrada Bot (${ci * 10 + 1}–${Math.min((ci + 1) * 10, guilds.length)} / ${guilds.length})`)
+        .setColor(0x5865f2)
+        .addFields(fields)
+        .setFooter({ text: `Ciyaal Xamar Bot · ${new Date().toUTCString()}` });
+
+      await msg.channel.send({ embeds: [embed] }).catch(() => null);
+    }
+
+    addLog(guildId, msg.guild.name, `📊 Owner wuxuu xukumay dashboard (${guilds.length} server)`);
     return;
   }
 
@@ -415,9 +456,9 @@ async function handleInteraction(interaction) {
     const game = games.get(parsed.gameChannelId);
     if (!game || game.phase !== "night") { await interaction.reply({ content: "⚠️ Habeenka ma socdo hadda.", ephemeral: true }); return; }
     const player = game.players.get(userId);
-    if (!player || player.role !== "sheriff" || !player.alive) { await interaction.reply({ content: "⚠️ Adigu ma tahid Sheriff nool.", ephemeral: true }); return; }
+    if (!player || player.role !== "sheriff" || !player.alive) { await interaction.reply({ content: "⚠️ Adigu ma tahid Atoore nool.", ephemeral: true }); return; }
     if (!game.nightSheriffUsed) game.nightSheriffUsed = new Set();
-    if (game.nightSheriffUsed.has(userId)) { await interaction.reply({ content: "⚠️ Hal xabbad oo kaliya ayaad haysataa habeen kasta — waad isticmaashay!", ephemeral: true }); return; }
+    if (game.nightSheriffUsed.has(userId)) { await interaction.reply({ content: "⚠️ Hal xabbad oo kaliya ayaad haysataa habeen kasta — waad isticmaashay! (Atoore)", ephemeral: true }); return; }
     game.nightSheriffUsed.add(userId);
 
     const target = game.players.get(parsed.targetId);
@@ -439,10 +480,10 @@ async function handleInteraction(interaction) {
       const channel = await client.channels.fetch(game.channelId).catch(() => null);
       if (channel) {
         const sheriffEmbed = new EmbedBuilder()
-          .setTitle("💥 SHERIFF-KU WUU TOOGTAY!")
+          .setTitle("💥 ATOORE WUU TOOGTAY!")
           .setColor(0xffd700)
           .setDescription(
-            `⭐ **Sheriff-ku** habeenkii wuxuu toogtay **${target.displayName}**!\n` +
+            `⭐ **Atoore** habeenkii wuxuu toogtay **${target.displayName}**!\n` +
             `🔪 Waxa uu ahaa **Dilaayaha**!\n` +
             `🎉 **Dilaayaha waa la dilay!**`
           )
