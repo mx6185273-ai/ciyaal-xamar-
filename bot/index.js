@@ -5,9 +5,9 @@ import {
   Client, GatewayIntentBits, Partials, Events, EmbedBuilder,
 } from "discord.js";
 import { joinVoiceChannel, VoiceConnectionStatus, entersState } from "@discordjs/voice";
-import { games, createGame, assignRoles, getAlivePlayers, getGuildGames, addLog } from "./game.js";
+import { games, createGame, assignRoles, getAlivePlayers, getGuildGames, addLog, checkWinCondition } from "./game.js";
 import { buildLobbyEmbed, buildLobbyButtons, buildRoleDmEmbed, buildKickButtons } from "./embeds.js";
-import { startNightPhase } from "./phases.js";
+import { startNightPhase, endGame } from "./phases.js";
 import { handlePirateMessage, handlePirateInteraction } from "./pirate-handler.js";
 import { handleBombMessage, handleBombInteraction } from "./bomb-handler.js";
 import { startAdminReporter, trackCommand, pushLog } from "./admin-reporter.js";
@@ -47,6 +47,8 @@ const client = new Client({
 
 client.once(Events.ClientReady, (c) => {
   console.log(`✅ Bot diyaar: ${c.user.tag} | ${c.guilds.cache.size} server`);
+  console.log('ℹ️  Haddii commands-yadaadu shaqeynin, Discord Developer Portal-ka fur:');
+  console.log('    Bot → Privileged Gateway Intents → ✅ SERVER MEMBERS INTENT + ✅ MESSAGE CONTENT INTENT');
   startAdminReporter(c);
 });
 client.on(Events.MessageCreate, (msg) => {
@@ -142,9 +144,9 @@ async function handleMessage(msg) {
         { name: "🔐 Owner-ka Kaliya", value: ["`!dm [farriin]` — Shacabka ciyaarta ku jira DM u dir", "`!news [farriin]` — Server walba dhammaan dadka DM u dir"].join("\n") },
         {
           name: "📌 Mafia Doorarka",
-          value: ["🔪 **Dilaaye** — Habeenta ciyaaryahan dila (waa sir)", "🩺 **Dhakhtar** — Habeenta hal qof badbaadi", "🕵️ **Danbi-baare** — Habeenta hal qof baari (Dilaaye mise maya)", "🏠 **Shacab** — Maalinta codbixinta ku saaro Dilaayaha"].join("\n"),
+          value: ["🔪 **Dilaaye** — Habeenta ciyaaryahan dila (waa sir)", "🩺 **Dhakhtar** — Habeenta hal qof badbaadi", "⭐ **Sheriff** — Habeenta Dilaaye toog karo (hal xabbad)", "🏠 **Shacab** — Maalinta codbixinta ku saaro Dilaayaha"].join("\n"),
         },
-        { name: "⚙️ Tirada Doorarka", value: ["`5-9`   ciyaaryahan: 1 Dilaaye, 1 Dhakhtar, 1 Danbi-baare", "`10-14` ciyaaryahan: 2 Dilaaye, 1 Dhakhtar, 1 Danbi-baare", "`15-20` ciyaaryahan: 3 Dilaaye, 1 Dhakhtar, 2 Danbi-baare"].join("\n") },
+        { name: "⚙️ Tirada Doorarka", value: ["`5-9`   ciyaaryahan: 1 Dilaaye, 1 Dhakhtar, 1 Sheriff", "`10-14` ciyaaryahan: 2 Dilaaye, 1 Dhakhtar, 1 Sheriff", "`15-20` ciyaaryahan: 3 Dilaaye, 1 Dhakhtar, 2 Sheriff"].join("\n") },
 
         {
           name: "🏴‍☠️ Pirate Treasure Hunt — Ciyaarta Cusub",
@@ -427,6 +429,20 @@ async function handleInteraction(interaction) {
       target.alive = false;
       addLog(game.guildId, guildName, '⭐ Sheriff wuxuu dilay Dilaaye: ' + target.displayName);
       await interaction.reply({ content: '⭐ Xabbadda waad ridday → **' + target.displayName + '** — ✅ WAA DILAAYE! Waa la dilay! 🔫', ephemeral: true });
+      const ch = await client.channels.fetch(game.channelId).catch(() => null);
+      if (ch) {
+        const sheriffEmbed = new EmbedBuilder()
+          .setTitle('💥 SHERIFF-KU WUU TOOGTAY!')
+          .setColor(0xffd700)
+          .setDescription('⭐ **Sheriff-ku** habeenkii wuxuu toogtay **' + target.displayName + '**!\n🔪 Waxa uu ahaa **Dilaayaha**!\n🎉 **Dilaayaha waa la dilay!**')
+          .setFooter({ text: 'Ciyaal Xamar · Mafia Game' });
+        await ch.send({ embeds: [sheriffEmbed] }).catch(() => null);
+      }
+      const winner = checkWinCondition(game);
+      if (winner) {
+        if (game.phaseTimer) { clearTimeout(game.phaseTimer); game.phaseTimer = null; }
+        await endGame(client, game, winner);
+      }
     } else {
       addLog(game.guildId, guildName, '⭐ Sheriff wuxuu ridday xabbad laakiin qofku Dilaaye ma aha');
       await interaction.reply({ content: '⭐ Xabbadda waad ridday → **' + target.displayName + '** — ❌ Ma aha Dilaaye. Waxba kuma dhacin.', ephemeral: true });

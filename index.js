@@ -49,6 +49,8 @@ process.on("uncaughtException", (err) => {
 
 client.once(Events.ClientReady, (c) => {
   console.log(`✅ Bot diyaar: ${c.user.tag} | ${c.guilds.cache.size} server`);
+  console.log('ℹ️  Haddii commands-yadaadu shaqeynin: Discord Developer Portal → Bot → Privileged Gateway Intents');
+  console.log('   ✅ SERVER MEMBERS INTENT + ✅ MESSAGE CONTENT INTENT — labadaba fur!');
   startAdminReporter(c);
 });
 client.on(Events.MessageCreate, (msg) => {
