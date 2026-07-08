@@ -1,5 +1,5 @@
 // index.js — Ciyaal Xamar Discord Bot
-// Commands: !dilaay !kasaar !join !leave !help !icaawi !dm !news !qarsoon
+// Commands: !dilaay !kasaar !join !leave !help !icaawi !dm !news !say
 import 'dotenv/config';
 import {
   Client, GatewayIntentBits, Partials, Events, EmbedBuilder,
@@ -10,11 +10,6 @@ import { joinVoiceChannel, VoiceConnectionStatus, entersState } from "@discordjs
 import { games, createGame, assignRoles, getAlivePlayers, getGuildGames, addLog, checkWinCondition } from "./game.js";
 import { buildLobbyEmbed, buildLobbyButtons, buildRoleDmEmbed, buildKickButtons } from "./embeds.js";
 import { startNightPhase, endGame } from "./phases.js";
-import { handlePirateMessage, handlePirateInteraction } from "./pirate-handler.js";
-import { handleSecretAgentMessage, handleSecretAgentInteraction } from "./secret-agent-handler.js";
-import { handleBombMessage, handleBombInteraction } from "./bomb-handler.js";
-import { getBalance, addCash } from "./economy.js";
-import { startAdminReporter, trackCommand } from "./admin-reporter.js";
 
 const MAX_GAMES_PER_GUILD = 5;
 const OWNER_ID = "725076744251637760";
@@ -30,7 +25,6 @@ if (!token) {
   console.error("   3. Token-ka Discord Developer Portal-ka ka hel:");
   console.error("      https://discord.com/developers/applications");
   console.error("   ──────────────────────────────────────────────────────");
-  // Wait indefinitely so Endercloud does NOT restart in a crash loop
   console.error("   Bot-ku wuxuu sugayaa token — lama joojinayo si Endercloud uusan dib u bilaamin.");
   await new Promise(() => {}); // hang forever until user sets the token
 }
@@ -59,7 +53,6 @@ client.once(Events.ClientReady, (c) => {
   console.log(`✅ Bot diyaar: ${c.user.tag} | ${c.guilds.cache.size} server`);
   console.log('ℹ️  Haddii commands-yadaadu shaqeynin: Discord Developer Portal → Bot → Privileged Gateway Intents');
   console.log('   ✅ SERVER MEMBERS INTENT + ✅ MESSAGE CONTENT INTENT — labadaba fur!');
-  startAdminReporter(c);
 });
 client.on(Events.MessageCreate, (msg) => {
   handleMessage(msg).catch(err => console.error("⚠️ MessageCreate error:", err?.message || err));
@@ -75,7 +68,7 @@ async function loginWithRetry() {
       await client.login(token);
       return; // success
     } catch (err) {
-      console.error(`❌ Login failed (#{attempt}): ${err.message}`);
+      console.error(`❌ Login failed (#${attempt}): ${err.message}`);
       console.error("   ─── Xalka ────────────────────────────────────────────");
       console.error("   1. Endercloud → Startup → DISCORD_BOT_TOKEN ku dar");
       console.error("   2. Ama Files → .env file samee oo ku qor:");
@@ -116,9 +109,6 @@ function joinVC(guildId, channelId, adapterCreator) {
 // ─── Message Handler ──────────────────────────────────────────────────────────
 async function handleMessage(msg) {
   if (msg.author.bot || !msg.guild) return;
-  if (await handlePirateMessage(client, msg)) return;
-  if (await handleSecretAgentMessage(client, msg)) return;
-  if (await handleBombMessage(client, msg)) return;
   const content  = msg.content.trim().toLowerCase();
   const raw      = msg.content.trim();
   const channelId = msg.channel.id;
@@ -136,25 +126,6 @@ async function handleMessage(msg) {
         { name: "🎧 Voice Channel — 24/7", value: ["`!join` — Bot-ka VC-ga ku soo gal (24/7 joogayaa)", "`!leave` — Bot-ka VC-ka ka saar"].join("\n") },
         { name: "🆘 Caawimo & Xiriir", value: ["`!icaawi [farriin]` — Cilad ama su'aal owner-ka u dir", "  _Tusaale: `!icaawi Bot-ka lobby kuma furin`_"].join("\n") },
         { name: "📝 Say Command", value: ["`!say` — Foom modal ah furo si bot-ku fariin idinku dhaha (Admin/Manage Messages)"].join("\n") },
-        {
-          name: "💣 Bomb Survival & Economy",
-          value: [
-            "`!bomb` — Lobby cusub bilow (2–8 ciyaaryahan, bet lacag, last survivor guulaysta)",
-            "`!balance` — Lacagtaada hadda arag",
-            "`!givecash @user lacag` — 💰 Owner: qof lacag shub (sidoo kale `!give @user lacag`)",
-          ].join("\n"),
-        },
-        {
-          name: "🏴‍☠️ Pirate Treasure Hunt",
-          value: [
-            "`!pirate` — Lobby cusub bilow (2–20 ciyaaryahan, elimination mode)",
-            "`!shop` — Alaabta lagu iibsan karo arag (Shield, Lucky Compass, Treasure Map)",
-            "`!buy shield` — 🛡️ 1,000 Gold · Deadly Trap kaa badbaadiya (2 mar)",
-            "`!buy compass` — 🧭 2,000 Gold · Treasure fursad kordhiya",
-            "`!buy map` — 🗺️ 10 Gems · Jasiirad ammaan ah tilmaamiya",
-            "`!leaderboard` — 🏆 Top 10 Pirates ee ugu badnaa Gold",
-          ].join("\n"),
-        }
       )
       .setFooter({ text: "Ciyaal Xamar Bot · !icaawi haddaad caawimaad u baahantahay" });
     await msg.reply({ embeds: [embed] });
@@ -316,62 +287,6 @@ async function handleMessage(msg) {
     return;
   }
 
-  // ── !balance ────────────────────────────────────────────────────────────────
-  if (content === "!balance") {
-    const bal = getBalance(msg.author.id, msg.author.username);
-    await msg.reply({ embeds: [
-      new EmbedBuilder()
-        .setTitle("💰 Wallet-kaaga")
-        .setColor(0xf59e0b)
-        .setDescription(bal === 0
-          ? "⚠️ **Haragaagu waa eber ($0)**\n\n_Ma lihid lacag aad ku ciyaari karto. Maamulaha waydiiso._"
-          : `💵 **Lacagtaada hadda: $${bal.toLocaleString()}**`)
-        .setFooter({ text: `${msg.author.username} · Ciyaal Xamar Economy` })
-        .setTimestamp()
-    ]});
-    return;
-  }
-
-  // ── !givecash — Owner kaliya: qof lacag sii ────────────────────────────────
-  if (content.startsWith("!givecash")) {
-    if (msg.author.id !== OWNER_ID) { await msg.reply("🔐 Amarka `!givecash` kaliya owner-ku wuxuu isticmaali karaa."); return; }
-    const parts = raw.slice("!givecash".length).trim().split(/\s+/);
-    const mention = parts[0];
-    const amount  = parseInt(parts[1], 10);
-    const match   = mention?.match(/^<@!?(\d+)>$/) || [null, mention?.match(/^\d{15,25}$/) ? mention : null];
-    const targetId = match[1] ?? (mention?.match(/^\d{15,25}$/) ? mention : null);
-    if (!targetId || !amount || isNaN(amount) || amount <= 0) {
-      await msg.reply("⚠️ Isticmaal: `!givecash @user lacagta`\n_Tusaale: `!givecash @Ahmed 10000`_");
-      return;
-    }
-    const user = await client.users.fetch(targetId).catch(() => null);
-    if (!user) { await msg.reply("⚠️ Qofkaan lama helin. Hubi mention-ka ama ID-ga."); return; }
-    const newBal = addCash(targetId, user.username, amount);
-    addLog(guildId, msg.guild.name, `💰 Owner wuxuu siiyay ${user.username} $${amount.toLocaleString()}`);
-    await msg.reply(`✅ **$${amount.toLocaleString()}** waxaa la siiyay **${user.displayName ?? user.username}**.\n💰 Haraagaaga cusub: **$${newBal.toLocaleString()}**`);
-    return;
-  }
-
-  // ── !give — alias for !givecash (Owner kaliya) ──────────────────────────────
-  if (content.startsWith("!give ") || content === "!give") {
-    if (msg.author.id !== OWNER_ID) { await msg.reply("🔐 Amarka `!give` kaliya owner-ku wuxuu isticmaali karaa."); return; }
-    const parts = raw.slice("!give".length).trim().split(/\s+/);
-    const mention = parts[0];
-    const amount  = parseInt(parts[1], 10);
-    const match   = mention?.match(/^<@!?(\d+)>$/) || [null, mention?.match(/^\d{15,25}$/) ? mention : null];
-    const targetId = match[1] ?? (mention?.match(/^\d{15,25}$/) ? mention : null);
-    if (!targetId || !amount || isNaN(amount) || amount <= 0) {
-      await msg.reply("⚠️ Isticmaal: `!give @user lacagta`\n_Tusaale: `!give @Ahmed 10000`_");
-      return;
-    }
-    const user = await client.users.fetch(targetId).catch(() => null);
-    if (!user) { await msg.reply("⚠️ Qofkaan lama helin. Hubi mention-ka ama ID-ga."); return; }
-    const newBal = addCash(targetId, user.username, amount);
-    addLog(guildId, msg.guild.name, `💰 Owner wuxuu siiyay ${user.username} $${amount.toLocaleString()}`);
-    await msg.reply(`✅ **$${amount.toLocaleString()}** waxaa la siiyay **${user.displayName ?? user.username}**.\n💰 Haraagaaga cusub: **$${newBal.toLocaleString()}**`);
-    return;
-  }
-
   // ── !say — Admin/Manage Messages kaliya: modal fur si loo diro fariin ─────
   if (content === "!say") {
     const hasPerm = msg.member?.permissions?.has(PermissionFlagsBits.Administrator)
@@ -452,9 +367,6 @@ async function handleInteraction(interaction) {
     return;
   }
 
-  if (await handleBombInteraction(client, interaction)) return;
-  if (await handlePirateInteraction(client, interaction)) return;
-  if (await handleSecretAgentInteraction(client, interaction)) return;
   const userId   = interaction.user.id;
   const customId = interaction.customId;
 

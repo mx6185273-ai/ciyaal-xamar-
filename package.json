@@ -1,7 +1,7 @@
 {
   "name": "ciyaal-xamar-bot",
   "version": "1.0.0",
-  "description": "Ciyaal Xamar Discord Bot — Mafia & Pirate Game",
+  "description": "Ciyaal Xamar Discord Bot — Dilaay (Mafia) Game",
   "type": "module",
   "main": "index.js",
   "scripts": {
