@@ -271,7 +271,15 @@ async function handleMessage(msg) {
       role: null, alive: true, protected: false,
     });
     addLog(guildId, msg.guild.name, `🎮 ${msg.author.username} wuxuu bilaabay ciyaaro cusub`);
-    const lobbyMsg = await msg.channel.send({ embeds: [buildLobbyEmbed(game, msg.guild)], components: [buildLobbyButtons(game)] });
+    const lobbyMsg = await msg.channel.send({ embeds: [buildLobbyEmbed(game, msg.guild)], components: [buildLobbyButtons(game)] }).catch(err => {
+      console.error("⚠️ Lobby send error:", err?.message || err);
+      return null;
+    });
+    if (!lobbyMsg) {
+      games.delete(channelId);
+      await msg.reply("⚠️ Lobby-ga lama furin karin. Hubi bot-ku Channel-ka fariin dhigi karo.").catch(() => null);
+      return;
+    }
     game.lobbyMessageId = lobbyMsg.id;
     return;
   }

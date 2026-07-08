@@ -8,11 +8,9 @@ import {
 import { getAlivePlayers, getDilaayePlayers, getRoleCounts } from "./game.js";
 
 const IMAGES = {
-  lobby:      "https://cdn.discordapp.com/attachments/1470820767204638742/1524083492114272387/IMG_6571.jpg?ex=6a4e74dc&is=6a4d235c&hm=9e395f3dddb3ac9597370519bae2140a66a818fbc2970dec1a99762948a03e74",
-  shacab:     "https://cdn.noctaly.com/servers/859126603619631115/tJGyElBTEm.jpg",
-  dhakhtar:   "https://cdn.noctaly.com/servers/859126603619631115/Wb6yHb4_M6.jpg",
-  sheriff:    "https://raw.githubusercontent.com/mx6185273-ai/ciyaal-xamar-/main/sheriff-banner.png",
-  dilaaye:    "https://cdn.noctaly.com/servers/859126603619631115/1TZ1--f_dY.jpg",
+  shacab:   "https://cdn.noctaly.com/servers/859126603619631115/tJGyElBTEm.jpg",
+  dhakhtar: "https://cdn.noctaly.com/servers/859126603619631115/Wb6yHb4_M6.jpg",
+  dilaaye:  "https://cdn.noctaly.com/servers/859126603619631115/1TZ1--f_dY.jpg",
 };
 
 // Golbi timer bar — maalinta codbixinta
@@ -55,7 +53,6 @@ export function buildLobbyEmbed(game, guild) {
       "Host-ku wuxuu bilaabi karaa marka dhammaantood diyaar yihiin."
     )
     .setColor(0x1a1a2e)
-    .setImage(IMAGES.lobby)
     .addFields(
       { name: "👥 Ciyaaryahanno", value: `**${count}** / 20`, inline: true },
       {
@@ -156,7 +153,6 @@ export function buildRoleDmEmbed(player, game) {
         "Haddii uu doorto qof aan Dilaaye ahayn, qofkaas waxba ma gaarayaan, habeenkuna wuu sii soconayaa."
       )
       .setColor(0xffd700)
-      .setImage(IMAGES.sheriff)
       .addFields(
         {
           name: "🎯 Xeerarka Sheriff",
@@ -302,7 +298,6 @@ export function buildSheriffTurnEmbed(round) {
       "⚠️ Waxaad dili kartaa oo keliya Dilaayaha.\n\n" +
       "Haddii aad doorato qof aan Dilaaye ahayn, waxba ma dhacayaan."
     )
-    .setImage(IMAGES.sheriff)
     .setFooter({ text: `Wareegga ${round} · Hal xabbad oo kaliya!` });
 }
 
