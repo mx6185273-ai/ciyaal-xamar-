@@ -19,9 +19,17 @@ const voiceConnections = new Map();
 
 const token = process.env["DISCORD_BOT_TOKEN"];
 if (!token) {
-  console.error("❌ DISCORD_BOT_TOKEN waa loo baahan yahay.");
-  console.error("   cp .env.example .env  →  token ku geli");
-  process.exit(1);
+  console.error("❌ DISCORD_BOT_TOKEN waa loo baahan yahay!");
+  console.error("   ─── Xalka ────────────────────────────────────────────");
+  console.error("   1. Endercloud → Startup → DISCORD_BOT_TOKEN ku dar");
+  console.error("   2. Ama Files → .env file samee oo ku qor:");
+  console.error("      DISCORD_BOT_TOKEN=your_token_here");
+  console.error("   3. Token-ka Discord Developer Portal-ka ka hel:");
+  console.error("      https://discord.com/developers/applications");
+  console.error("   ──────────────────────────────────────────────────────");
+  // Wait indefinitely so Endercloud does NOT restart in a crash loop
+  console.error("   Bot-ku wuxuu sugayaa token — lama joojinayo si Endercloud uusan dib u bilaamin.");
+  await new Promise(() => {}); // hang forever until user sets the token
 }
 
 
@@ -96,7 +104,29 @@ client.on(Events.GuildDelete, async (guild) => {
   pushLog('guild_leave', `Bot wuxuu ka baxay server: ${guild.name}`, guild.name, '', '');
 });
 
-client.login(token).catch(err => { console.error("❌ Login failed:", err.message); process.exit(1); });
+async function loginWithRetry() {
+  let attempt = 0;
+  while (true) {
+    attempt++;
+    try {
+      await client.login(token);
+      return; // success
+    } catch (err) {
+      console.error(`❌ Login failed (#{attempt}): ${err.message}`);
+      console.error("   ─── Xalka ────────────────────────────────────────────");
+      console.error("   1. Endercloud → Startup → DISCORD_BOT_TOKEN ku dar");
+      console.error("   2. Ama Files → .env file samee oo ku qor:");
+      console.error("      DISCORD_BOT_TOKEN=your_token_here");
+      console.error("   3. Token-ka Discord Developer Portal-ka ka hel:");
+      console.error("      https://discord.com/developers/applications");
+      console.error("   ──────────────────────────────────────────────────────");
+      const wait = Math.min(30 * attempt, 300); // 30s, 60s, 90s, ... max 5min
+      console.error(`   ${wait} ilbiriqsi kadib dib ayaa loo isku dayayaa (isku day #${attempt + 1})...`);
+      await new Promise(r => setTimeout(r, wait * 1000));
+    }
+  }
+}
+loginWithRetry();
 
 // ─── Voice Helper ─────────────────────────────────────────────────────────────
 function joinVC(guildId, channelId, adapterCreator) {
