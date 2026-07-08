@@ -411,17 +411,26 @@ async function handleInteraction(interaction) {
     return;
   }
 
-  if (customId.startsWith("night_investigate_")) {
-    const parsed = parseNightCustomId(customId, "night_investigate_");
-    if (!parsed) { await interaction.reply({ content: "⚠️ Cilad dhacday.", ephemeral: true }); return; }
+  if (customId.startsWith('night_sheriff_')) {
+    const parsed = parseNightCustomId(customId, 'night_sheriff_');
+    if (!parsed) { await interaction.reply({ content: '⚠️ Cilad dhacday.', ephemeral: true }); return; }
     const game = games.get(parsed.gameChannelId);
-    if (!game || game.phase !== "night") { await interaction.reply({ content: "⚠️ Habeenka ma socdo hadda.", ephemeral: true }); return; }
+    if (!game || game.phase !== 'night') { await interaction.reply({ content: '⚠️ Habeenka ma socdo hadda.', ephemeral: true }); return; }
     const player = game.players.get(userId);
-    if (!player || player.role !== "danbi-baare" || !player.alive) { await interaction.reply({ content: "⚠️ Adigu ma tahid Danbi-baare nool.", ephemeral: true }); return; }
-    if (game.nightInvestigations.has(userId)) { await interaction.reply({ content: "⚠️ Hore baad baarisay habeentan. Hal baaritaan oo kaliya.", ephemeral: true }); return; }
-    game.nightInvestigations.set(userId, parsed.targetId);
+    if (!player || player.role !== 'sheriff' || !player.alive) { await interaction.reply({ content: '⚠️ Adigu ma tahid Sheriff nool.', ephemeral: true }); return; }
+    if (game.nightSheriffUsed.has(userId)) { await interaction.reply({ content: '⚠️ Hore baad xabbad ridday habeentan. Hal xabbad oo keliya.', ephemeral: true }); return; }
+    game.nightSheriffUsed.add(userId);
     const target = game.players.get(parsed.targetId);
-    if (target) await interaction.reply({ content: `🔍 **${target.displayName}** — ${target.role === "dilaaye" ? "✅ WAA DILAAYE! 🔪" : "❌ Ma aha Dilaaye"}`, ephemeral: true });
+    if (!target || !target.alive) { await interaction.reply({ content: '⚠️ Ciyaaryahankaan nool maaha.', ephemeral: true }); return; }
+    const guildName = (await client.guilds.fetch(game.guildId).catch(() => null))?.name ?? 'Unknown';
+    if (target.role === 'dilaaye') {
+      target.alive = false;
+      addLog(game.guildId, guildName, '⭐ Sheriff wuxuu dilay Dilaaye: ' + target.displayName);
+      await interaction.reply({ content: '⭐ Xabbadda waad ridday → **' + target.displayName + '** — ✅ WAA DILAAYE! Waa la dilay! 🔫', ephemeral: true });
+    } else {
+      addLog(game.guildId, guildName, '⭐ Sheriff wuxuu ridday xabbad laakiin qofku Dilaaye ma aha');
+      await interaction.reply({ content: '⭐ Xabbadda waad ridday → **' + target.displayName + '** — ❌ Ma aha Dilaaye. Waxba kuma dhacin.', ephemeral: true });
+    }
     return;
   }
 
