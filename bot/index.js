@@ -24,6 +24,15 @@ if (!token) {
   process.exit(1);
 }
 
+
+// ─── Crash Protection — bot-ku waa inuusan weligiis crash gareyn ─────────────
+process.on('unhandledRejection', (reason) => {
+  console.error('⚠️ Unhandled promise rejection:', reason?.message || reason);
+});
+process.on('uncaughtException', (err) => {
+  console.error('⚠️ Uncaught exception:', err?.message || err);
+});
+
 const client = new Client({
   intents: [
     GatewayIntentBits.Guilds,
@@ -40,8 +49,12 @@ client.once(Events.ClientReady, (c) => {
   console.log(`✅ Bot diyaar: ${c.user.tag} | ${c.guilds.cache.size} server`);
   startAdminReporter(c);
 });
-client.on(Events.MessageCreate, (msg) => handleMessage(msg));
-client.on(Events.InteractionCreate, (interaction) => handleInteraction(interaction));
+client.on(Events.MessageCreate, (msg) => {
+  handleMessage(msg).catch(err => console.error('⚠️ MessageCreate error:', err?.message || err));
+});
+client.on(Events.InteractionCreate, (interaction) => {
+  handleInteraction(interaction).catch(err => console.error('⚠️ InteractionCreate error:', err?.message || err));
+});
 
 // ─── Welcome System ───────────────────────────────────────────────────────────
 client.on(Events.GuildMemberAdd, async (member) => {
