@@ -1,5 +1,5 @@
 // index.js — Ciyaal Xamar Discord Bot
-// Commands: !dilaay !kasaar !bomb !balance !join !leave !help !icaawi !dm !news !say !dashboard
+// Commands: !dilaay !kasaar !join !leave !help !icaawi !dm !news !say !dashboard
 import 'dotenv/config';
 import {
   Client, GatewayIntentBits, Partials, Events, EmbedBuilder,
@@ -10,8 +10,6 @@ import { joinVoiceChannel, VoiceConnectionStatus, entersState } from "@discordjs
 import { games, createGame, assignRoles, getAlivePlayers, getGuildGames, addLog, checkWinCondition } from "./game.js";
 import { buildLobbyEmbed, buildLobbyButtons, buildRoleDmEmbed, buildKickButtons } from "./embeds.js";
 import { startNightPhase, endGame } from "./phases.js";
-import { handleBombMessage, handleBombInteraction } from "./bomb-handler.js";
-import { getBalance } from "./economy.js";
 
 const MAX_GAMES_PER_GUILD = 5;
 const OWNER_ID = "725076744251637760";
@@ -124,7 +122,6 @@ async function handleMessage(msg) {
       .setDescription("Waa kuwan dhammaan amarrada bot-ka:")
       .addFields(
         { name: "🔪 Mafia Ciyaarta", value: ["`!dilaay` — Lobby cusub bilow (adiga waxaad noqon doontaa host)", "`!kasaar` — Host: ciyaaryahan lobby ka saar"].join("\n") },
-        { name: "💣 Bomb Survival", value: ["`!bomb` — Bomb Survival lobby bilow (bet system leh)", "`!balance` — Lacagtaada arag"].join("\n") },
         { name: "📊 Owner Commands", value: ["`!dashboard` — Serverrada bot ku jira oo dhan arag (Owner kaliya)"].join("\n") },
         { name: "🎧 Voice Channel — 24/7", value: ["`!join` — Bot-ka VC-ga ku soo gal (24/7 joogayaa)", "`!leave` — Bot-ka VC-ka ka saar"].join("\n") },
         { name: "🆘 Caawimo & Xiriir", value: ["`!icaawi [farriin]` — Cilad ama su'aal owner-ka u dir", "  _Tusaale: `!icaawi Bot-ka lobby kuma furin`_"].join("\n") },
@@ -338,28 +335,6 @@ async function handleMessage(msg) {
     return;
   }
 
-  // ── !bomb ──────────────────────────────────────────────────────────────────
-  if (content === "!bomb") {
-    await handleBombMessage(client, msg);
-    return;
-  }
-
-  // ── !balance ───────────────────────────────────────────────────────────────
-  if (content === "!balance") {
-    const bal = getBalance(msg.author.id, msg.author.username);
-    await msg.reply({ embeds: [
-      new EmbedBuilder()
-        .setTitle("💰 Haraagaaga — Ciyaal Xamar")
-        .setColor(0xf59e0b)
-        .addFields(
-          { name: "👤 Magaca", value: msg.member?.displayName ?? msg.author.username, inline: true },
-          { name: "💵 Lacagta", value: `**${bal.toLocaleString()}**`, inline: true }
-        )
-        .setFooter({ text: "Ciyaal Xamar · Bomb Survival Economy" })
-    ]});
-    return;
-  }
-
   // ── !say — Admin/Manage Messages kaliya: modal fur si loo diro fariin ─────
   if (content === "!say") {
     const hasPerm = msg.member?.permissions?.has(PermissionFlagsBits.Administrator)
@@ -411,12 +386,6 @@ async function handleInteraction(interaction) {
     return;
   }
   if (!interaction.isButton()) return;
-
-  // ── Bomb Survival buttons ──────────────────────────────────────────────────
-  if (interaction.customId.startsWith("bomb_")) {
-    await handleBombInteraction(client, interaction);
-    return;
-  }
 
   // !say — button-ka foomka fura
   if (interaction.customId.startsWith("open_say_")) {
