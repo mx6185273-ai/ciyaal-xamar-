@@ -18,15 +18,16 @@ const voiceConnections = new Map();
 const token = process.env["DISCORD_BOT_TOKEN"];
 if (!token) {
   console.error("❌ DISCORD_BOT_TOKEN waa loo baahan yahay!");
-  console.error("   ─── Xalka ────────────────────────────────────────────");
-  console.error("   1. Endercloud → Startup → DISCORD_BOT_TOKEN ku dar");
-  console.error("   2. Ama Files → .env file samee oo ku qor:");
-  console.error("      DISCORD_BOT_TOKEN=your_token_here");
+  console.error("   ─── Xalka (Railway) ──────────────────────────────────");
+  console.error("   1. Railway → Xulashada project-kaaga → Variables");
+  console.error("   2. 'New Variable' riix, kadibna ku qor:");
+  console.error("      NAME:  DISCORD_BOT_TOKEN");
+  console.error("      VALUE: token-kaaga Discord bot-ka");
   console.error("   3. Token-ka Discord Developer Portal-ka ka hel:");
   console.error("      https://discord.com/developers/applications");
   console.error("   ──────────────────────────────────────────────────────");
-  console.error("   Bot-ku wuxuu sugayaa token — lama joojinayo si Endercloud uusan dib u bilaamin.");
-  await new Promise(() => {}); // hang forever until user sets the token
+  console.error("   Variable ku dar kadib Railway wuxuu bot-ka dib u bilaabi doonaa.");
+  process.exit(1);
 }
 
 const client = new Client({
@@ -69,14 +70,12 @@ async function loginWithRetry() {
       return; // success
     } catch (err) {
       console.error(`❌ Login failed (#${attempt}): ${err.message}`);
-      console.error("   ─── Xalka ────────────────────────────────────────────");
-      console.error("   1. Endercloud → Startup → DISCORD_BOT_TOKEN ku dar");
-      console.error("   2. Ama Files → .env file samee oo ku qor:");
-      console.error("      DISCORD_BOT_TOKEN=your_token_here");
-      console.error("   3. Token-ka Discord Developer Portal-ka ka hel:");
+      console.error("   ─── Xalka (Railway) ──────────────────────────────────");
+      console.error("   1. Railway → project → Variables → DISCORD_BOT_TOKEN hubi");
+      console.error("   2. Token-ka Discord Developer Portal-ka ka hel:");
       console.error("      https://discord.com/developers/applications");
       console.error("   ──────────────────────────────────────────────────────");
-      const wait = Math.min(30 * attempt, 300); // 30s, 60s, 90s, ... max 5min
+      const wait = Math.min(30 * attempt, 300);
       console.error(`   ${wait} ilbiriqsi kadib dib ayaa loo isku dayayaa (isku day #${attempt + 1})...`);
       await new Promise(r => setTimeout(r, wait * 1000));
     }
